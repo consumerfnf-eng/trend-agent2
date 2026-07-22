@@ -234,6 +234,9 @@
   .mp-t-kw { font-size:17px; font-weight:700; text-transform:capitalize; margin-top:3px; }
   .m-filter { display:flex; gap:8px; align-items:center; margin:12px 0; flex-wrap:wrap; font-size:12px; color:var(--text-3); }
   .m-filter select { font-family:inherit; font-size:12px; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  .m-segrow { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .m-fchip { font-family:inherit; font-size:12px; cursor:pointer; color:var(--text-2); background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:6px 13px; }
+  .m-fchip.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--violet),var(--blue)); font-weight:600; }
   .m-sec { font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.05em; margin:14px 0 9px; display:flex; align-items:center; gap:7px; }
   .m-sec .badge { background:var(--panel); color:var(--text-2); border-radius:20px; padding:2px 8px; font-size:10px; }
   .m-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
@@ -966,12 +969,12 @@ document.getElementById('navKeywords').addEventListener('click', e => { e.preven
 
 /* ── Matching (트렌드 ↔ 시장 신상 아카이브) ── */
 const SHEET_CSVS = [
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvYXQtzOfR1p8oy0QsJboB7ISEPJ5XDWvk9XSlCo26K3RPGkbTCrgWPDyPBVtJEbWH7trD_ygb78W/pub?output=csv",
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTM4CmHdD1mVYoIJpCFwN3BL-CieosFTPUpeuI-mVmBtZyrp21Eo4aZT0W1sd8YPFvv8AIKVoqwjxkl/pub?output=csv",
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRS7fhPv-WoZLXyCA_yvSih3AJ_0QknKITaWod3PFT-XFituL38V6Yzj4Vk_POIIRWZDeDUGR8Q0nSA/pub?output=csv",
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRXHbfhMkjSHtL_1A9LnQgPi7qBSVzVmEXj4Sd21D1pZ4iV1Ed_4mbUPBcZ7eXFJiJm7Pv1Y3wRQmwr/pub?output=csv",
+  { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvYXQtzOfR1p8oy0QsJboB7ISEPJ5XDWvk9XSlCo26K3RPGkbTCrgWPDyPBVtJEbWH7trD_ygb78W/pub?output=csv", segment:"스포츠·아웃도어" },
+  { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTM4CmHdD1mVYoIJpCFwN3BL-CieosFTPUpeuI-mVmBtZyrp21Eo4aZT0W1sd8YPFvv8AIKVoqwjxkl/pub?output=csv", segment:"국내 브랜드" },
+  { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRS7fhPv-WoZLXyCA_yvSih3AJ_0QknKITaWod3PFT-XFituL38V6Yzj4Vk_POIIRWZDeDUGR8Q0nSA/pub?output=csv", segment:"럭셔리" },
+  { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRXHbfhMkjSHtL_1A9LnQgPi7qBSVzVmEXj4Sd21D1pZ4iV1Ed_4mbUPBcZ7eXFJiJm7Pv1Y3wRQmwr/pub?output=csv", segment:"애슬레저" },
 ];
-const SHEET_CSV = SHEET_CSVS[0];   // 하위호환
+const SHEET_CSV = SHEET_CSVS[0].url;   // 하위호환
 const CAT_GROUP = {
   top:['top','tops','knit','tshirt','shirt','sweater','blouse'],
   outer:['outer','outerwear','jacket','coat','padding','down','vest'],
@@ -1015,6 +1018,7 @@ const MATCH_HINTS = {
 };
 
 let mProducts = [], mMatches = [], mActiveTrend = null, mSeasonFilter = 3, mLoaded = false, mShowAllCat = false;
+let mSegFilter = 'all', mBrandFilter = 'all';
 
 function mPick(row, names) {
   const keys = Object.keys(row);
@@ -1034,14 +1038,15 @@ function seasonToNum(s) {
 }
 function monthsAgoNum(m) { const d = new Date(); d.setMonth(d.getMonth() - m); return d.getFullYear() * 100 + (d.getMonth() + 1); }
 
-// 여러 게시 CSV를 병렬로 읽어 하나로 합침
-function parseSheet(url, offset) {
+// 여러 게시 CSV를 병렬로 읽어 하나로 합침 (시트별 세그먼트 태깅)
+function parseSheet(sheet, offset) {
   return new Promise(resolve => {
-    Papa.parse(url, {
+    Papa.parse(sheet.url, {
       download: true, header: true, skipEmptyLines: true,
       complete: (res) => {
         const rows = (res.data || []).map((r, i) => ({
           _id: 'p' + (offset + i),
+          segment: sheet.segment,
           season: mPick(r, ['season','시즌']),
           seasonNum: seasonToNum(mPick(r, ['season','시즌'])),
           brand: mPick(r, ['brand','브랜드']),
@@ -1057,7 +1062,7 @@ function parseSheet(url, offset) {
   });
 }
 async function loadAllSheets() {
-  const results = await Promise.all(SHEET_CSVS.map((u, i) => parseSheet(u, i * 100000)));
+  const results = await Promise.all(SHEET_CSVS.map((s, i) => parseSheet(s, i * 100000)));
   return results.flat();
 }
 
@@ -1073,7 +1078,8 @@ async function initMatching() {
 
   // 팀이 SIGNAL BOX로 등록한 실물 신상(source_type='item')도 후보에 합침
   const teamItems = all.filter(s => s.source_type === 'item').map(s => ({
-    _id: s.id,   // 실제 시그널 id 사용
+    _id: s.id,
+    segment: '팀 등록',
     season: monthLabel(s.month_bucket || ''),
     seasonNum: s.month_bucket ? seasonToNum(s.month_bucket) : nowSeasonNum(),
     brand: teamBrandLabel(s.brand_fit),
@@ -1180,7 +1186,7 @@ function renderMTrends2() {
     </div>`;
   }).join('') : '<div style="color:var(--text-3);font-size:12px;padding:20px 0">이 카테고리 트렌드가 없어요</div>';
 }
-window.selectMTrend = id => { mActiveTrend = mTrends().find(t => t.id === id); mShowAllCat = false; renderMTrends2(); renderMMatchPanel(); };
+window.selectMTrend = id => { mActiveTrend = mTrends().find(t => t.id === id); mShowAllCat = false; mSegFilter = 'all'; mBrandFilter = 'all'; renderMTrends2(); renderMMatchPanel(); };
 
 async function renderMMatchPanel() {
   const t = mActiveTrend;
@@ -1194,11 +1200,18 @@ async function renderMMatchPanel() {
   const matched = inWindow.filter(p => matchedIds.has(p._id));
 
   // 같은 카테고리 상품 (1차 필터)
-  const sameCat = inWindow.filter(p => !matchedIds.has(p._id) && mCatMatch(t.category, p.category));
+  let sameCat = inWindow.filter(p => !matchedIds.has(p._id) && mCatMatch(t.category, p.category));
+
+  // 세그먼트·브랜드 필터용 목록 (카테고리 필터 후 기준)
+  const segList = ['all', ...[...new Set(sameCat.map(p => p.segment).filter(Boolean))]];
+  if (mSegFilter !== 'all') sameCat = sameCat.filter(p => p.segment === mSegFilter);
+  const brandList = ['all', ...[...new Set(sameCat.map(p => p.brand).filter(Boolean))].sort()];
+  if (mBrandFilter !== 'all') sameCat = sameCat.filter(p => p.brand === mBrandFilter);
+
   // 힌트/키워드로 점수 매겨 정렬
   const scored = sameCat.map(p => ({ p, score: mProdScore(t, p, krMap) }));
-  const hits = scored.filter(c => c.score > 20).sort((a, b) => b.score - a.score);   // 힌트까지 걸린 것
-  const catOnly = scored.filter(c => c.score <= 20).sort((a, b) => b.p.seasonNum - a.p.seasonNum);  // 카테고리만 맞는 것
+  const hits = scored.filter(c => c.score > 20).sort((a, b) => b.score - a.score);
+  const catOnly = scored.filter(c => c.score <= 20).sort((a, b) => b.p.seasonNum - a.p.seasonNum);
 
   const cands = (mShowAllCat ? [...hits, ...catOnly] : hits).slice(0, mShowAllCat ? 60 : 12);
 
@@ -1206,26 +1219,35 @@ async function renderMMatchPanel() {
     <div class="m-prod-check">✓</div>${p.brand ? `<span class="m-prod-tag" style="${p.isTeam ? 'background:rgba(139,124,246,0.92);color:#fff' : ''}">${p.isTeam ? '팀 · ' : ''}${esc(p.brand)}</span>` : ''}
     <div class="m-prod-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '◇'}</div>
     <div class="m-prod-body"><div class="m-prod-name">${esc(p.name || '상품')}</div>
-    <div class="m-prod-meta">${esc(p.season || '')}${p.color ? ' · ' + esc(p.color) : ''}</div></div></div>`;
+    <div class="m-prod-meta">${p.segment ? esc(p.segment) + ' · ' : ''}${esc(p.season || '')}</div></div></div>`;
 
   const seasonOpts = [{v:3,t:'최근 3개월'},{v:6,t:'최근 6개월'},{v:12,t:'최근 1년'},{v:0,t:'전체 시즌'}]
     .map(o => `<option value="${o.v}" ${o.v === mSeasonFilter ? 'selected' : ''}>${o.t}</option>`).join('');
 
+  // 세그먼트 필터 칩
+  const segChips = segList.map(s => `<button class="m-fchip ${s === mSegFilter ? 'on' : ''}" onclick="mSegFilter='${esc(s)}';mBrandFilter='all';renderMMatchPanel()">${s === 'all' ? '전체 세그먼트' : esc(s)}</button>`).join('');
+  // 브랜드 필터 드롭다운 (많으니 select로)
+  const brandOpts = brandList.map(b => `<option value="${esc(b)}" ${b === mBrandFilter ? 'selected' : ''}>${b === 'all' ? '전체 브랜드' : esc(b)}</option>`).join('');
+
   const sameCatCount = sameCat.length;
   document.getElementById('mMatchPanel').innerHTML = `
     <div class="mp-t-head"><div class="mp-t-label">선택한 트렌드</div><div class="mp-t-kw">${esc(kw)}</div></div>
-    <div class="m-filter"><span>시즌 범위</span>
+    <div class="m-filter"><span>시즌</span>
       <select onchange="mSeasonFilter=parseInt(this.value);renderMMatchPanel()">${seasonOpts}</select>
-      <span>· ${MCAT_KR[t.category] || t.category || ''} ${sameCatCount}건 중</span></div>
-    ${matched.length ? `<div class="m-sec">매칭된 시장 신상 <span class="badge">${matched.length}</span></div><div class="m-grid">${matched.map(p => card(p, true)).join('')}</div>` : ''}
+      <span style="margin-left:4px">브랜드</span>
+      <select onchange="mBrandFilter=this.value;renderMMatchPanel()">${brandOpts}</select>
+    </div>
+    <div class="m-segrow">${segChips}</div>
+    ${matched.length ? `<div class="m-sec">매칭됨 <span class="badge">${matched.length}</span></div><div class="m-grid">${matched.map(p => card(p, true)).join('')}</div>` : ''}
     <div class="m-sec">
-      ${mShowAllCat ? `${MCAT_KR[t.category] || ''} 카테고리 전체` : 'AI 추천 후보'} <span class="badge">${cands.length}</span>
+      ${mShowAllCat ? '전체' : 'AI 추천'} <span class="badge">${cands.length}</span>
+      <span style="color:var(--text-3);font-weight:400;margin-left:6px">/ ${MCAT_KR[t.category] || t.category || ''} ${sameCatCount}건</span>
       <button onclick="mShowAllCat=!mShowAllCat;renderMMatchPanel()" style="margin-left:auto;font-family:inherit;font-size:11px;color:var(--violet);background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;cursor:pointer">
-        ${mShowAllCat ? '추천만 보기' : '이 카테고리 전체 보기'}</button>
+        ${mShowAllCat ? '추천만' : '전체 보기'}</button>
     </div>
     ${cands.length ? `<div class="m-grid">${cands.map(c => card(c.p, false)).join('')}</div>`
-      : `<div class="m-empty-hint">추천 후보가 없어요.<br>"이 카테고리 전체 보기"로 직접 골라보세요.</div>`}
-    <a class="m-propose ${matched.length ? '' : 'disabled'}" href="./11_proposal_edit.html">이 매칭으로 브랜드 제안 만들기 →</a>`;
+      : `<div class="m-empty-hint">이 조건에 맞는 신상이 없어요.<br>세그먼트·브랜드·시즌을 바꿔보세요.</div>`}
+    <a class="m-propose ${matched.length ? '' : 'disabled'}" href="./11_proposal_edit.html?trend=${encodeURIComponent(kw)}&trendId=${t.id}&cat=${encodeURIComponent(t.category||'')}">이 매칭으로 브랜드 제안 만들기 →</a>`;
 }
 
 window.toggleMMatch = async (pid) => {

@@ -54,6 +54,11 @@
     color:var(--text-2); cursor:pointer; }
   .kw-tag.on { background:rgba(139,124,246,0.16); border-color:var(--violet); color:var(--text); }
 
+  .ai-img-row { display:flex; align-items:center; gap:12px; }
+  .ai-img-row .btn { flex:0 0 auto; }
+  .ai-img-box { margin-top:12px; border:1px solid var(--border); border-radius:11px; overflow:hidden; max-width:340px; background:var(--panel); }
+  .ai-img-box img { width:100%; display:block; }
+
   .actions { display:flex; gap:10px; margin-top:30px; }
   .btn { flex:1; padding:14px; border-radius:9px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; border:none; }
   .btn.primary { background:linear-gradient(135deg,var(--violet),var(--blue)); color:#fff; }
@@ -96,6 +101,16 @@
   <label>작성자</label>
   <input class="field" id="author" placeholder="이름">
 
+  <label>AI 컨셉 이미지 — 이 트렌드를 선택한 브랜드 무드로 시각화</label>
+  <div class="hint" style="margin-bottom:8px">방향 제안용 컨셉 이미지예요. 실제 디자인이 아니라 "이런 무드로" 참고용입니다.</div>
+  <div class="ai-img-row">
+    <button class="btn ghost" id="genImgBtn" type="button">✨ AI 이미지 생성</button>
+    <span class="hint" id="genImgHint"></span>
+  </div>
+  <div class="ai-img-box" id="aiImgBox" style="display:none">
+    <img id="aiImg" alt="AI 컨셉 이미지">
+  </div>
+
   <div class="actions">
     <button class="btn ghost" id="deleteBtn" style="display:none">삭제</button>
     <button class="btn primary" id="saveBtn">제안 저장</button>
@@ -117,7 +132,7 @@ const CAT_MATCH = {
   shoes:['shoes'], cap:['acc'], bag:['bag'], acc:['acc'],
 };
 
-let curBrand = 'mlb', curCat = 'tshirt';
+let curBrand = 'mlb', curCat = 'tshirt', curTrend = '';
 let allSignals = [], selectedSigs = new Set(), selectedKws = new Set();
 let editId = null;
 
@@ -233,6 +248,35 @@ async function loadForEdit(id) {
   document.getElementById('deleteBtn').style.display = '';
 }
 
+/* AI 컨셉 이미지 생성 */
+document.getElementById('genImgBtn').addEventListener('click', async () => {
+  const trend = curTrend || document.getElementById('title').value.trim();
+  if (!trend) { showToast('먼저 매칭에서 넘어오거나 제목에 트렌드를 입력해주세요.', false); return; }
+
+  const btn = document.getElementById('genImgBtn');
+  const hint = document.getElementById('genImgHint');
+  btn.disabled = true; btn.textContent = '생성 중… (20~40초)';
+  hint.textContent = `${BRANDS[curBrand]} 무드로 "${trend}" 그리는 중…`;
+
+  try {
+    const { data, error } = await sb.functions.invoke('generate-image', {
+      body: { trend, brand: curBrand, category: curCat, summary: document.getElementById('direction').value.trim() },
+    });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || '생성 실패');
+
+    const src = data.b64 ? `data:image/png;base64,${data.b64}` : data.url;
+    document.getElementById('aiImg').src = src;
+    document.getElementById('aiImgBox').style.display = '';
+    hint.textContent = `${BRANDS[curBrand]} 무드 · ${trend}`;
+  } catch (e) {
+    showToast('이미지 생성 실패: ' + esc(e.message || e), false);
+    hint.textContent = '';
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ AI 이미지 생성';
+  }
+});
+
 (async () => {
   const { data } = await sb.from('signals')
     .select('id,created_at,author,note,image_url,keywords,category,brand_fit')
@@ -243,7 +287,19 @@ async function loadForEdit(id) {
   if (params.get('id')) await loadForEdit(params.get('id'));
   else {
     if (params.get('brand')) curBrand = params.get('brand');
-    if (params.get('cat')) curCat = params.get('cat');
+    if (params.get('cat')) {
+      const c = params.get('cat');
+      // 매칭에서 넘어온 시트 카테고리(shoe 등) → 제안 카테고리로 변환
+      const map = { shoe:'shoes', shoes:'shoes', top:'tshirt', outer:'outer', outerwear:'outer', bottom:'pants', pants:'pants', bag:'bag', acc:'acc', dress:'dress', skirt:'skirt' };
+      curCat = map[c] || c;
+    }
+    // 매칭에서 넘어온 트렌드 → 제목에 미리 채움
+    const trend = params.get('trend');
+    if (trend) {
+      curTrend = trend;
+      document.getElementById('title').value = `${trend} 방향 제안`;
+      document.getElementById('genImgHint').textContent = `트렌드: ${trend}`;
+    }
     try { const a = localStorage.getItem('signal_author'); if (a) document.getElementById('author').value = a; } catch (e) {}
   }
 
