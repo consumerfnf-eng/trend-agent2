@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#F6F3EC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SIGNAL BOX">
+<title>SIGNAL BOX — 트렌드 시그널 수집</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F3EC;
+    --ink: #1C1B18;
+    --ink-soft: #6E6A60;
+    --line: #D8D3C6;
+    --accent: #B44B2E;
+    --ok: #2E6B4F;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    min-height: 100vh; display: flex; justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 440px; padding: 28px 20px 60px; }
+
+  header { text-align: center; border-bottom: 1px solid var(--ink); padding-bottom: 18px; margin-bottom: 8px; }
+  .eyebrow { font-size: 10px; letter-spacing: 0.32em; color: var(--ink-soft); text-transform: uppercase; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 600; letter-spacing: 0.04em; margin-top: 6px; line-height: 1; }
+  h1 em { font-style: italic; font-weight: 500; }
+  .sub { font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+
+  .month-bar {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 2px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .month-bar b { color: var(--ink); font-weight: 600; }
+
+  label { display: block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 8px; }
+
+  .paste-zone {
+    border: 1px dashed var(--line); background: #FFFFFF; border-radius: 2px;
+    min-height: 130px; display: flex; align-items: center; justify-content: center;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    padding: 10px;
+  }
+  .paste-zone.drag { border-color: var(--accent); background: #FDF8F3; }
+  .paste-zone p { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  .paste-zone p b { color: var(--ink); font-weight: 600; }
+
+  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .thumb { position: relative; border: 1px solid var(--line); background: #fff; overflow: hidden; }
+  .thumb .timg { aspect-ratio: 1; overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb button {
+    position: absolute; top: 4px; right: 4px;
+    background: var(--ink); color: var(--paper); border: none; border-radius: 50%;
+    width: 22px; height: 22px; font-size: 12px; cursor: pointer; line-height: 1;
+  }
+  .thumb input {
+    width: 100%; border: none; border-top: 1px solid var(--line);
+    padding: 7px 8px; font-family: inherit; font-size: 12px; background: #fff; color: var(--ink);
+  }
+  .thumb input:focus { outline: none; background: var(--paper); }
+
+  .tool-row { display: flex; gap: 8px; margin-top: 10px; }
+  .tool-btn {
+    flex: 1; padding: 11px; background: #fff; border: 1px solid var(--line); border-radius: 2px;
+    font-family: inherit; font-size: 12px; letter-spacing: 0.06em; color: var(--ink); cursor: pointer;
+  }
+  .tool-btn:active { background: var(--paper); }
+
+  /* 선택 칩 (브랜드·카테고리·축) */
+  .mode-tabs { display:flex; gap:8px; margin-bottom:20px; }
+  .mode-tab { flex:1; padding:12px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    background:#fff; border:1px solid var(--line); border-radius:4px; color:var(--ink-soft); }
+  .mode-tab.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sel-chip {
+    font-size: 12px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 20px;
+    background: #fff; color: var(--ink-soft); cursor: pointer; font-family: inherit; user-select: none;
+  }
+  .sel-chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .opt-hint { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+
+  input[type="text"], input[type="url"], textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: 2px;
+    background: #FFFFFF; color: var(--ink); font-family: inherit; font-size: 15px;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--ink); }
+  textarea { resize: none; height: 68px; }
+
+  .submit {
+    width: 100%; margin-top: 28px; padding: 16px;
+    background: var(--ink); color: var(--paper); border: none; border-radius: 2px;
+    font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0.12em; cursor: pointer;
+  }
+  .submit:disabled { opacity: 0.4; cursor: default; }
+  .submit:not(:disabled):active { background: var(--accent); }
+
+  .toast { margin-top: 16px; padding: 12px 14px; border-radius: 2px; font-size: 13px; display: none; line-height: 1.6; }
+  .toast.show { display: block; }
+  .toast.ok { background: #E7EFE9; color: var(--ok); }
+  .toast.err { background: #F4E3DD; color: var(--accent); }
+
+  .feed-title {
+    margin-top: 44px; padding-bottom: 10px; border-bottom: 1px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .feed-title span { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; }
+  .feed-title button { background: none; border: none; cursor: pointer; font-family: inherit; font-size: 11px; letter-spacing: 0.1em; color: var(--ink-soft); text-decoration: underline; }
+
+  .card { display: flex; gap: 12px; background: #FFFFFF; border: 1px solid var(--line); border-radius: 2px; padding: 12px; margin-top: 12px; }
+  .card .fimg { width: 72px; height: 72px; flex-shrink: 0; background: var(--paper); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--ink-soft); overflow: hidden; }
+  .card .fimg img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-top { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--ink); color: var(--ink); }
+  .badge.brand { background: var(--ink); color: var(--paper); }
+  .badge.pending { border-color: var(--line); color: var(--ink-soft); }
+  .card-note { font-size: 13px; line-height: 1.5; margin-top: 6px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .chip { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; background: var(--paper); border: 1px solid var(--line); padding: 2px 8px; color: var(--ink-soft); }
+  .card-meta { font-size: 10px; letter-spacing: 0.1em; color: var(--ink-soft); margin-top: 8px; text-transform: uppercase; }
+  .card a { color: inherit; }
+  .empty-feed { text-align: center; font-size: 12px; color: var(--ink-soft); padding: 24px 0; }
+
+  footer { margin-top: 40px; text-align: center; font-size: 10px; letter-spacing: 0.2em; color: var(--ink-soft); text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">F&amp;F · Trend Intelligence</div>
+    <h1>SIGNAL <em>BOX</em></h1>
+    <div class="sub">보이는 순간, 10초 안에 던져 넣기. 분류는 AI가 합니다.</div>
+  </header>
+
+  <div class="month-bar">
+    <span id="monthLabel">—</span>
+    <span><b id="monthCount">0</b> signals</span>
+  </div>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab on" data-mode="trend" type="button">🔍 트렌드</button>
+    <button class="mode-tab" data-mode="product" type="button">🛍 제품</button>
+  </div>
+
+  <!-- ===== 트렌드 폼 ===== -->
+  <div id="trendForm">
+  <label>이미지 — 여러 장이면 각각 시그널로 등록돼요</label>
+  <div class="paste-zone" id="zone">
+    <p><b>탭해서 사진 선택</b> · 드래그앤드롭 · Ctrl+V</p>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+  <div class="tool-row">
+    <button class="tool-btn" id="clipBtn" type="button">📋 클립보드에서 붙여넣기</button>
+  </div>
+
+  <label>링크 — 인스타 · 무신사 · 29CM · 뉴스레터 등</label>
+  <input type="url" id="url" placeholder="https:// (이미지가 있으면 생략 가능)">
+
+  <label>브랜드 — 선택 안 하면 AI가 자동 판단 (복수 선택 가능)</label>
+  <div class="chip-group" id="brandChips"></div>
+
+  <label>카테고리 — 선택 안 하면 AI가 자동 판단</label>
+  <div class="chip-group" id="catChips"></div>
+
+  <label>트렌드 축 — 선택 안 하면 AI가 자동 판단</label>
+  <div class="chip-group" id="axisChips"></div>
+
+  <label>전체 메모 — 개별 메모가 없는 이미지에 적용 (선택)</label>
+  <textarea id="note" placeholder="예: 요즘 배럴레그 계속 보임. 성수에서도 목격"></textarea>
+
+  <label>이름</label>
+  <input type="text" id="author" placeholder="예: 주현">
+
+  <button class="submit" id="submitBtn">트렌드 등록</button>
+  </div>
+
+  <!-- ===== 제품 폼 (구글시트와 동일 구조) ===== -->
+  <div id="productForm" style="display:none">
+  <label>제품 이미지</label>
+  <div class="paste-zone" id="pZone">
+    <p><b>탭해서 사진 선택</b> · 드래그앤드롭 · Ctrl+V</p>
+    <input type="file" id="pFileInput" accept="image/*" hidden>
+  </div>
+  <div class="thumbs" id="pThumbs"></div>
+
+  <label>제품명 <span style="color:var(--accent)">*</span></label>
+  <input type="text" id="pName" placeholder="예: 살로몬 XT-6 스카이라인 블랙">
+
+  <label>브랜드</label>
+  <input type="text" id="pBrand" placeholder="예: 살로몬 / MLB / 마뗑킴">
+
+  <label>카테고리 <span style="color:var(--accent)">*</span></label>
+  <div class="chip-group" id="pCatChips"></div>
+
+  <label>시즌</label>
+  <input type="text" id="pSeason" placeholder="예: 2026.07 (비우면 이번 달)">
+
+  <label>성별</label>
+  <div class="chip-group" id="pGenderChips"></div>
+
+  <label>컬러</label>
+  <input type="text" id="pColor" placeholder="예: 블랙 / 크림화이트">
+
+  <button class="submit" id="pSubmitBtn">제품 등록</button>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="feed-title">
+    <span>Recent signals</span>
+    <button id="refreshBtn" type="button">새로고침</button>
+  </div>
+  <div id="feed"><div class="empty-feed">불러오는 중…</div></div>
+
+  <footer>Issue feeds the monthly dashboard</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://bmfehgkfueeiwkhgxwvs.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_D444jYf-8FaJsPl7YJ6Cew_kKfcWIwP";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const BRAND_LABELS = { mlb: "MLB", discovery: "DISCOVERY", sergio: "SERGIO", duvetica: "DUVETICA" };
+const TYPE_LABELS = { product: "Product", lifestyle: "Lifestyle" };
+
+const zone = document.getElementById('zone');
+const thumbsEl = document.getElementById('thumbs');
+const fileInput = document.getElementById('fileInput');
+const toast = document.getElementById('toast');
+const btn = document.getElementById('submitBtn');
+const feed = document.getElementById('feed');
+let images = [];   // { blob, note } 배열 — 각각 별도 시그널이 됨
+
+// 사람이 직접 고르는 옵션 (선택 시 AI가 해당 필드를 덮어쓰지 않음)
+const BRAND_OPTS = { mlb:'MLB', discovery:'디스커버리', sergio:'세르지오', duvetica:'듀베티카' };
+const CAT_OPTS = { outer:'아우터', top:'상의', pants:'하의', skirt:'스커트', dress:'원피스', bag:'백', shoes:'신발', acc:'액세서리', brand:'브랜드' };
+const AXIS_OPTS = { silhouette:'실루엣', color:'컬러', detail:'디테일', fabric:'소재', pattern:'패턴', styling:'스타일링', movement:'무브먼트' };
+// 제품 탭: 시트와 동일한 영문 카테고리 값
+const PCAT_OPTS = { top:'top', outerwear:'outerwear', bottom:'bottom', shoe:'shoe', bag:'bag', acc:'acc', dress:'dress' };
+const PGENDER_OPTS = { Women:'Women', Men:'Men', Unisex:'Unisex' };
+let selBrands = new Set();
+let selCat = null;
+let selAxis = null;
+let pCat = null, pGender = null;
+
+function renderChips(elId, opts, isSet, getSel) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = Object.entries(opts).map(([k, v]) => {
+    const on = isSet ? getSel().has(k) : getSel() === k;
+    return `<span class="sel-chip ${on ? 'on' : ''}" data-k="${k}">${v}</span>`;
+  }).join('');
+}
+function renderAllChips() {
+  renderChips('brandChips', BRAND_OPTS, true, () => selBrands);
+  renderChips('catChips', CAT_OPTS, false, () => selCat);
+  renderChips('axisChips', AXIS_OPTS, false, () => selAxis);
+  renderChips('pCatChips', PCAT_OPTS, false, () => pCat);
+  renderChips('pGenderChips', PGENDER_OPTS, false, () => pGender);
+}
+document.getElementById('brandChips').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  selBrands.has(k) ? selBrands.delete(k) : selBrands.add(k);
+  renderAllChips();
+});
+document.getElementById('catChips').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  selCat = (selCat === k) ? null : k; renderAllChips();
+});
+document.getElementById('axisChips').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  selAxis = (selAxis === k) ? null : k; renderAllChips();
+});
+document.getElementById('pCatChips').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  pCat = (pCat === k) ? null : k; renderAllChips();
+});
+document.getElementById('pGenderChips').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  pGender = (pGender === k) ? null : k; renderAllChips();
+});
+renderAllChips();
+
+// 탭 전환
+document.getElementById('modeTabs').addEventListener('click', e => {
+  const mode = e.target.dataset.mode; if (!mode) return;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  document.getElementById('trendForm').style.display = mode === 'trend' ? '' : 'none';
+  document.getElementById('productForm').style.display = mode === 'product' ? '' : 'none';
+});
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+function seoulMonth() {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit' }).format(new Date());
+}
+document.getElementById('monthLabel').textContent =
+  new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Seoul', month: 'long', year: 'numeric' }).format(new Date()).toUpperCase() + ' issue';
+
+/* ── 이미지 추가/삭제 ── */
+function addImages(list) {
+  let added = 0;
+  for (const b of list) if (b && b.type && b.type.startsWith('image/')) { images.push({ blob: b, note: '' }); added++; }
+  if (added) renderThumbs();
+  return added;
+}
+function renderThumbs() {
+  thumbsEl.innerHTML = images.map((it, i) => `
+    <div class="thumb">
+      <div class="timg"><img src="${URL.createObjectURL(it.blob)}" alt=""></div>
+      <button type="button" onclick="removeImage(${i})" aria-label="제거">×</button>
+      <input type="text" placeholder="이 이미지 메모" value="${esc(it.note)}"
+        oninput="images[${i}].note = this.value">
+    </div>`).join('');
+}
+window.removeImage = i => { images.splice(i, 1); renderThumbs(); };
+
+/* ── 입력 경로: 붙여넣기 / 파일선택 / 드래그 / 클립보드 버튼 ── */
+document.addEventListener('paste', e => {
+  const blobs = [...e.clipboardData.items].filter(it => it.type.startsWith('image/')).map(it => it.getAsFile());
+  if (addImages(blobs)) e.preventDefault();
+});
+zone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => { addImages([...fileInput.files]); fileInput.value = ''; });
+
+['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('drag'); }));
+zone.addEventListener('drop', e => addImages([...e.dataTransfer.files]));
+
+document.getElementById('clipBtn').addEventListener('click', async () => {
+  try {
+    const items = await navigator.clipboard.read();
+    let found = 0;
+    for (const item of items) {
+      for (const t of item.types) {
+        if (t.startsWith('image/')) { addImages([await item.getType(t)]); found++; }
+      }
+    }
+    if (!found) showToast('클립보드에 이미지가 없어요. 캡처를 먼저 복사해주세요.', false);
+  } catch (e) {
+    showToast('이 브라우저에선 버튼 붙여넣기가 안 돼요. 입력창을 길게 눌러 붙여넣기 해주세요.', false);
+  }
+});
+
+/* ── 이미지 자동 압축 (최대 1600px, JPEG) ── */
+async function compress(blob) {
+  if (blob.size < 400 * 1024) return blob;   // 400KB 미만은 그대로
+  try {
+    const bmp = await createImageBitmap(blob);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const out = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+    return (out && out.size < blob.size) ? out : blob;
+  } catch (e) { return blob; }
+}
+
+/* ── 기타 UI ── */
+try {
+  const saved = localStorage.getItem('signal_author');
+  if (saved) document.getElementById('author').value = saved;
+} catch (e) {}
+
+function showToast(html, ok) {
+  toast.innerHTML = html;
+  toast.className = 'toast show ' + (ok ? 'ok' : 'err');
+}
+function timeAgo(iso) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return '방금';
+  if (s < 3600) return Math.floor(s / 60) + '분 전';
+  if (s < 86400) return Math.floor(s / 3600) + '시간 전';
+  return Math.floor(s / 86400) + '일 전';
+}
+function topBrand(fit) {
+  if (!fit) return null;
+  const best = Object.entries(fit).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0];
+  return best && best[1] >= 0.5 ? best : null;
+}
+function chipRow(keywords) {
+  if (!keywords || !keywords.length) return '';
+  return '<div class="chips">' + keywords.slice(0, 4).map(k => `<span class="chip">${esc(k)}</span>`).join('') + '</div>';
+}
+
+/* ── 피드 ── */
+function renderCard(s) {
+  const brand = topBrand(s.brand_fit);
+  const badges = [];
+  if (s.signal_type && TYPE_LABELS[s.signal_type]) badges.push(`<span class="badge">${TYPE_LABELS[s.signal_type]}</span>`);
+  if (brand) badges.push(`<span class="badge brand">${BRAND_LABELS[brand[0]] || esc(brand[0])} ${Math.round(brand[1] * 10) / 10}</span>`);
+  if (!s.ai_summary && !s.keywords?.length) badges.push('<span class="badge pending">AI 분류 대기</span>');
+  const thumb = s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy">` : (s.url ? '🔗' : '—');
+  const text = s.ai_summary || s.note || (s.url ? s.url.replace(/^https?:\/\//, '').slice(0, 60) : '');
+  const link = s.url ? ` · <a href="${esc(s.url)}" target="_blank" rel="noopener">링크</a>` : '';
+  return `<div class="card">
+    <div class="fimg">${thumb}</div>
+    <div class="card-body">
+      <div class="card-top">${badges.join('')}</div>
+      <div class="card-note">${esc(text)}</div>
+      ${chipRow(s.keywords)}
+      <div class="card-meta">${esc(s.author || '?')} · ${timeAgo(s.created_at)}${link}</div>
+    </div>
+  </div>`;
+}
+async function loadFeed() {
+  const { data, error } = await sb.from('signals')
+    .select('id,created_at,author,note,url,image_url,keywords,brand_fit,ai_summary,signal_type')
+    .order('created_at', { ascending: false }).limit(8);
+  if (error || !data) { feed.innerHTML = '<div class="empty-feed">피드를 불러오지 못했어요.</div>'; return; }
+  feed.innerHTML = data.length ? data.map(renderCard).join('') : '<div class="empty-feed">아직 시그널이 없어요. 첫 시그널을 등록해보세요!</div>';
+}
+async function loadCount() {
+  const { count } = await sb.from('signals').select('id', { count: 'exact', head: true }).eq('month_bucket', seoulMonth());
+  document.getElementById('monthCount').textContent = count ?? 0;
+}
+async function pollTagging(id) {
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 2500));
+    const { data } = await sb.from('signals').select('keywords,ai_summary,brand_fit').eq('id', id).single();
+    if (data && (data.ai_summary || data.keywords?.length)) {
+      const brand = topBrand(data.brand_fit);
+      showToast(`AI 분류 완료 — ${esc(data.ai_summary || '')}` +
+        (brand ? `<br>가장 적합: <b>${BRAND_LABELS[brand[0]] || esc(brand[0])}</b>` : '') + chipRow(data.keywords), true);
+      loadFeed();
+      return;
+    }
+  }
+}
+document.getElementById('refreshBtn').addEventListener('click', () => { loadFeed(); loadCount(); });
+
+/* ── 등록 ── */
+async function insertOne({ image, url, note, author }) {
+  let image_url = null;
+  if (image) {
+    const small = await compress(image);
+    const ext = small.type === 'image/jpeg' ? 'jpg' : ((image.type.split('/')[1] || 'png').replace('jpeg', 'jpg'));
+    const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await sb.storage.from('signal-images').upload(path, small, { contentType: small.type });
+    if (upErr) throw upErr;
+    image_url = sb.storage.from('signal-images').getPublicUrl(path).data.publicUrl;
+  }
+  // 사람이 고른 값 → 저장하고, AI가 못 덮어쓰게 locked에 기록
+  const row = { url: url || null, image_url, note: note || null, author: author || null };
+  const locked = [];
+  if (selBrands.size) {
+    row.brand_fit = {}; for (const b of ['mlb','discovery','sergio','duvetica']) row.brand_fit[b] = selBrands.has(b) ? 1 : 0;
+    locked.push('brand_fit');
+  }
+  if (selCat) { row.category = selCat; locked.push('category'); }
+  if (selAxis) { row.axis = selAxis; locked.push('axis'); }
+  if (locked.length) row.locked_fields = locked;
+
+  const { data, error } = await sb.from('signals').insert(row).select('id').single();
+  if (error) throw error;
+  sb.functions.invoke('tag-signal', { body: { id: data.id } }).catch(() => {});
+  return data.id;
+}
+
+btn.addEventListener('click', async () => {
+  const url = document.getElementById('url').value.trim();
+  const note = document.getElementById('note').value.trim();
+  const author = document.getElementById('author').value.trim();
+
+  if (!images.length && !url) { showToast('이미지 또는 링크 중 하나는 필요해요.', false); return; }
+
+  btn.disabled = true;
+  try {
+    let ids = [];
+    if (images.length) {
+      for (let i = 0; i < images.length; i++) {
+        btn.textContent = `등록 중… ${i + 1}/${images.length}`;
+        const itemNote = images[i].note.trim() || note;   // 개별 메모 우선, 없으면 공통 메모
+        ids.push(await insertOne({ image: images[i].blob, url, note: itemNote, author }));
+      }
+    } else {
+      btn.textContent = '등록 중…';
+      ids.push(await insertOne({ url, note, author }));
+    }
+
+    try { localStorage.setItem('signal_author', author); } catch (e) {}
+
+    showToast(ids.length > 1 ? `${ids.length}건 등록 완료! AI가 분류 중입니다…` : '등록 완료! AI가 분류 중입니다…', true);
+    images = []; renderThumbs();
+    selBrands = new Set(); selCat = null; selAxis = null; renderAllChips();
+    document.getElementById('url').value = '';
+    document.getElementById('note').value = '';
+    loadFeed(); loadCount();
+    if (ids.length === 1) pollTagging(ids[0]);
+  } catch (err) {
+    showToast('등록 실패: ' + esc(err.message || err), false);
+  } finally {
+    btn.disabled = false; btn.textContent = '트렌드 등록';
+  }
+});
+
+loadFeed();
+loadCount();
+
+/* ===== 제품 폼 ===== */
+let pImage = null;
+const pZone = document.getElementById('pZone');
+const pFileInput = document.getElementById('pFileInput');
+function setPImage(blob) {
+  pImage = blob;
+  const url = URL.createObjectURL(blob);
+  document.getElementById('pThumbs').innerHTML = `<div class="thumb"><img src="${url}" alt=""></div>`;
+}
+pZone.addEventListener('click', () => pFileInput.click());
+pFileInput.addEventListener('change', e => { if (e.target.files[0]) setPImage(e.target.files[0]); });
+pZone.addEventListener('dragover', e => { e.preventDefault(); pZone.classList.add('over'); });
+pZone.addEventListener('dragleave', () => pZone.classList.remove('over'));
+pZone.addEventListener('drop', e => {
+  e.preventDefault(); pZone.classList.remove('over');
+  const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/'));
+  if (f) setPImage(f);
+});
+document.addEventListener('paste', e => {
+  if (document.getElementById('productForm').style.display === 'none') return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (item) setPImage(item.getAsFile());
+});
+
+document.getElementById('pSubmitBtn').addEventListener('click', async () => {
+  const name = document.getElementById('pName').value.trim();
+  if (!name) { showToast('제품명을 입력해주세요.', false); return; }
+  if (!pCat) { showToast('카테고리를 선택해주세요.', false); return; }
+
+  const btn = document.getElementById('pSubmitBtn');
+  btn.disabled = true; btn.textContent = '등록 중…';
+  try {
+    let image_url = null;
+    if (pImage) {
+      const small = await compress(pImage);
+      const ext = small.type === 'image/jpeg' ? 'jpg' : 'png';
+      const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await sb.storage.from('signal-images').upload(path, small, { contentType: small.type });
+      if (upErr) throw upErr;
+      image_url = sb.storage.from('signal-images').getPublicUrl(path).data.publicUrl;
+    }
+    const brand = document.getElementById('pBrand').value.trim();
+    const season = document.getElementById('pSeason').value.trim();
+    const color = document.getElementById('pColor').value.trim();
+
+    // 제품은 시트와 동일 구조로 저장 (source_type='item', 카테고리는 시트값)
+    // 상품 상세를 note에 시트 형식으로 담고, category/brand_fit도 세팅
+    const noteParts = [];
+    if (brand) noteParts.push('브랜드:' + brand);
+    if (color) noteParts.push('컬러:' + color);
+    if (document.getElementById('pGenderChips') && pGender) noteParts.push('성별:' + pGender);
+    if (season) noteParts.push('시즌:' + season);
+
+    const row = {
+      source_type: 'item',
+      category: pCat,                       // 시트와 동일 영문값 (shoe/top/outerwear...)
+      ai_summary: name,                     // 제품명을 요약 자리에 (매칭 표시용)
+      note: noteParts.join(' · ') || null,
+      image_url,
+      author: brand || null,
+      keywords: [name.toLowerCase()],       // 제품명 자체를 키워드로 (매칭 힌트)
+      locked_fields: ['source_type','category'],
+      status: 'item',
+    };
+    // 우리 4브랜드면 brand_fit도 세팅
+    const B = { mlb:['mlb','MLB'], discovery:['discovery','디스커버리'], sergio:['sergio','세르지오'], duvetica:['duvetica','듀베티카'] };
+    for (const [key, names] of Object.entries(B)) {
+      if (names.some(n => brand.toLowerCase().includes(n.toLowerCase()))) {
+        row.brand_fit = { mlb:0, discovery:0, sergio:0, duvetica:0 }; row.brand_fit[key] = 1;
+        row.locked_fields.push('brand_fit'); break;
+      }
+    }
+
+    const { error } = await sb.from('signals').insert(row);
+    if (error) throw error;
+
+    showToast('제품 등록 완료 — 매칭 후보에 추가됐어요', true);
+    document.getElementById('pName').value = '';
+    document.getElementById('pBrand').value = '';
+    document.getElementById('pSeason').value = '';
+    document.getElementById('pColor').value = '';
+    pImage = null; pCat = null; pGender = null;
+    document.getElementById('pThumbs').innerHTML = '';
+    renderAllChips();
+    loadFeed(); loadCount();
+  } catch (err) {
+    showToast('등록 실패: ' + esc(err.message || err), false);
+  } finally {
+    btn.disabled = false; btn.textContent = '제품 등록';
+  }
+});
+</script>
+</body>
+</html>

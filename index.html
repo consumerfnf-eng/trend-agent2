@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trend Signal — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E0F12;
+    --panel: #16171B;
+    --panel-2: #1C1D22;
+    --border: #26272D;
+    --text: #ECEDEF;
+    --text-2: #9A9CA5;
+    --text-3: #6C6E78;
+    --violet: #8B7CF6;
+    --blue: #5CA8FF;
+    --green: #34C08B;
+    --green-bg: rgba(52,192,139,0.12);
+    --red: #F06A6A;
+    --red-bg: rgba(240,106,106,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', 'IBM Plex Sans KR', sans-serif;
+    font-size: 14px;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 216px; flex-shrink: 0; border-right: 1px solid var(--border);
+    padding: 20px 14px; position: sticky; top: 0; height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 22px; }
+  .logo .mark {
+    width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #fff;
+  }
+  .logo b { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo small { display: block; font-size: 10px; color: var(--text-3); font-weight: 400; }
+
+  .nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; color: var(--text-2);
+    font-size: 13px; font-weight: 500; margin-bottom: 2px;
+  }
+  .nav a:hover { background: var(--panel); color: var(--text); }
+  .nav a.on { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .nav .ico { width: 16px; text-align: center; opacity: 0.9; }
+
+  .side-bottom { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); }
+  .add-btn {
+    display: block; text-align: center; padding: 10px;
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    border-radius: 8px; color: #fff; font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .side-note { font-size: 10px; color: var(--text-3); text-align: center; margin-top: 10px; line-height: 1.6; }
+
+  /* ── Main ── */
+  .main { flex: 1; padding: 24px 28px 60px; min-width: 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .topbar h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+  .topbar p { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+  select {
+    font-family: inherit; font-size: 13px; color: var(--text);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; cursor: pointer;
+  }
+
+  /* ── Overview 아이템/라이프스타일 상위 탭 ── */
+  .ov-modes { display:flex; gap:0; margin-bottom:16px; border-bottom:1px solid var(--border); }
+  .ov-modes button { font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; color:var(--text-3);
+    background:none; border:none; padding:10px 4px; margin-right:24px; position:relative; }
+  .ov-modes button:hover { color:var(--text-2); }
+  .ov-modes button.on { color:var(--text); }
+  .ov-modes button.on::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--violet); }
+
+  /* ── Overview 카테고리 탭 ── */
+  .ov-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .ov-cats button { font-family:inherit; font-size:12.5px; cursor:pointer; color:var(--text-2);
+    background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:8px 15px; }
+  .ov-cats button:hover { color:var(--text); }
+  .ov-cats button.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--violet),var(--blue)); font-weight:600; }
+
+  /* ── Hero: 이번 달 톱 스타일 (이미지 랭킹) ── */
+  .hero { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  @media (max-width: 1100px) { .hero { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .hero { grid-template-columns: repeat(2, 1fr); } }
+  .hcard { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform .12s, border-color .12s; position: relative; }
+  .hcard:hover { transform: translateY(-3px); border-color: #3A3B42; }
+  .h-rank {
+    position: absolute; top: 8px; left: 8px; z-index: 2;
+    width: 24px; height: 24px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .h-stage {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px;
+    background: rgba(14,15,18,0.75); backdrop-filter: blur(4px);
+  }
+  .h-stage.new { color: var(--blue); }
+  .h-stage.rising { color: var(--green); }
+  .h-stage.steady { color: var(--text-2); }
+  .h-img { aspect-ratio: 4/3; background: var(--panel-2); overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 22px; }
+  .h-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+  .hcard:hover .h-img img { transform: scale(1.04); }
+  .h-body { padding: 10px 12px 12px; }
+  .h-kw { font-size: 14px; font-weight: 600; text-transform: capitalize;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .h-cat { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+
+  /* ── Panels row ── */
+  .row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-top: 14px; align-items: stretch; }
+  @media (max-width: 1000px) { .row2 { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .panel-head h2 { font-size: 15px; font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .chart-wrap { position: relative; height: 260px; }
+
+  .topkw { display: flex; flex-direction: column; gap: 12px; }
+  .tk { cursor: pointer; }
+  .tk .tk-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .tk .tk-name { font-size: 13px; font-weight: 600; text-transform: capitalize; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .tk .tk-cat { font-size: 10px; color: var(--text-3); }
+  .tk .bar { height: 6px; background: var(--panel-2); border-radius: 4px; margin-top: 7px; overflow: hidden; }
+  .tk .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--blue)); }
+  .tk:hover .tk-name { color: var(--violet); }
+  .delta-up { color: var(--green); font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .delta-down { color: var(--red); font-weight: 600; font-size: 12px; white-space: nowrap; }
+
+  /* ── Brand Radar (Overview 하단: 브랜드별 추천 트렌드) ── */
+  .brand-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 1000px) { .brand-grid { grid-template-columns: repeat(2, 1fr); } }
+  .br-col { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .br-col h5 { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-2);
+    padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .br-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .br-item:last-child { border-bottom: none; padding-bottom: 2px; }
+  .br-item:hover .br-kw { color: var(--violet); }
+  .br-thumb { width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: var(--panel); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+  .br-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .br-info { flex: 1; min-width: 0; }
+  .br-kw { font-size: 13px; font-weight: 600; text-transform: capitalize; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .br-fit { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+  .br-delta { font-size: 11px; white-space: nowrap; }
+  .br-empty { font-size: 11px; color: var(--text-3); padding: 14px 0; }
+
+  /* ── Proposals ── */
+  .prop-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+  .prop-toolbar .seg { display:flex; gap:6px; flex-wrap:wrap; }
+  .prop-toolbar .seg button { font-family:inherit; font-size:12px; cursor:pointer; color:var(--text-2);
+    background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:7px 14px; }
+  .prop-toolbar .seg button.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--violet),var(--blue)); font-weight:600; }
+  .prop-new { margin-left:auto; padding:9px 16px; border-radius:8px; font-weight:600; font-size:13px;
+    background:linear-gradient(135deg,var(--violet),var(--blue)); color:#fff; }
+  .prop-list { display:flex; flex-direction:column; gap:14px; }
+  .prop-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px; }
+  .prop-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .prop-brand { font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--violet); }
+  .prop-title { font-size:18px; font-weight:700; margin-top:4px; }
+  .prop-cat { font-size:11px; color:var(--text-3); background:var(--panel-2); border:1px solid var(--border);
+    padding:4px 10px; border-radius:20px; white-space:nowrap; }
+  .prop-dir { font-size:13.5px; color:#c9cad0; line-height:1.7; margin-top:12px; white-space:pre-wrap; }
+  .prop-sigs { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .prop-sig { width:66px; height:66px; border-radius:8px; overflow:hidden; background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--text-3); cursor:pointer; }
+  .prop-sig img { width:100%; height:100%; object-fit:cover; }
+  .prop-evidence { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .prop-ev-title { font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
+  .prop-ev-row { display:flex; align-items:center; gap:10px; padding:6px 0; }
+  .prop-ev-kw { font-size:12px; font-weight:600; text-transform:capitalize; min-width:120px; }
+  .prop-ev-spark { flex:0 0 auto; }
+  .prop-foot { display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:11px; color:var(--text-3); }
+  .prop-foot a { color:var(--text-2); }
+  .prop-empty { text-align:center; padding:50px 16px; color:var(--text-3); font-size:13px; line-height:1.9; }
+
+  /* ── Research Radar (기사 기반 리서치 트렌드) ── */
+  .research-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:1000px){ .research-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .research-grid { grid-template-columns:1fr; } }
+  .rcard { background:var(--panel-2); border:1px solid var(--border); border-radius:11px;
+    display:flex; flex-direction:column; transition:transform .12s, border-color .12s; border-left:3px solid var(--violet); }
+  .rcard:hover { transform:translateY(-2px); border-color:#3A3B42; }
+  .r-body { padding:15px 16px 14px; flex:1; display:flex; flex-direction:column; }
+  .r-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .r-kw { font-size:15px; font-weight:600; text-transform:capitalize; }
+  .r-cat-txt { font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap; }
+  .r-sum { font-size:12px; color:var(--text-2); line-height:1.6; margin-top:8px; flex:1;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; }
+  .r-src { font-size:10px; color:var(--text-3); margin-top:12px; padding-top:10px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .r-src a { color:var(--blue); }
+  .research-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .research-cats button { font-family:inherit; font-size:12px; cursor:pointer; color:var(--text-2);
+    background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:7px 14px; }
+  .research-cats button.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--violet),var(--blue)); font-weight:600; }
+
+  /* ── Matching ── */
+  .match-status { font-size:12px; color:var(--text-3); margin-bottom:14px; }
+  .match-status b { color:var(--green); }
+  .match-status.err b { color:var(--red); }
+  .match-board { display:grid; grid-template-columns:1fr 1.3fr; gap:16px; align-items:start; }
+  @media (max-width:900px){ .match-board { grid-template-columns:1fr; } }
+  .mb-col-title { font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .mb-col-title .dot { width:8px; height:8px; border-radius:50%; }
+  .m-trend-card { background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:13px; margin-bottom:10px; cursor:pointer; transition:border-color .12s; }
+  .m-trend-card:hover { border-color:#3A3B42; }
+  .m-trend-card.active { border-color:var(--violet); background:#1a1922; }
+  .mtc-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .mtc-kw { font-size:14px; font-weight:600; text-transform:capitalize; }
+  .mtc-cat { font-size:10px; color:var(--text-3); border:1px solid var(--border); padding:2px 7px; border-radius:20px; white-space:nowrap; }
+  .mtc-sum { font-size:11px; color:var(--text-2); line-height:1.5; margin-top:6px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .mtc-foot { font-size:11px; margin-top:8px; }
+  .mtc-foot .on { color:var(--green); font-weight:600; }
+  .mtc-foot .off { color:var(--text-3); }
+  .m-panel { background:var(--panel-2); border:1px solid var(--border); border-radius:11px; padding:16px; position:sticky; top:20px; }
+  .mp-empty2 { text-align:center; color:var(--text-3); font-size:13px; padding:50px 16px; line-height:1.8; }
+  .mp-t-head { padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .mp-t-label { font-size:11px; color:var(--violet); font-weight:600; }
+  .mp-t-kw { font-size:17px; font-weight:700; text-transform:capitalize; margin-top:3px; }
+  .m-filter { display:flex; gap:8px; align-items:center; margin:12px 0; flex-wrap:wrap; font-size:12px; color:var(--text-3); }
+  .m-filter select { font-family:inherit; font-size:12px; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  .m-sec { font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.05em; margin:14px 0 9px; display:flex; align-items:center; gap:7px; }
+  .m-sec .badge { background:var(--panel); color:var(--text-2); border-radius:20px; padding:2px 8px; font-size:10px; }
+  .m-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+  @media (max-width:560px){ .m-grid { grid-template-columns:repeat(2,1fr); } }
+  .m-prod { border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--panel); cursor:pointer; transition:border-color .12s; position:relative; }
+  .m-prod:hover { border-color:#3A3B42; }
+  .m-prod.matched { border-color:var(--green); }
+  .m-prod-img { aspect-ratio:3/4; background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--text-3); }
+  .m-prod-img img { width:100%; height:100%; object-fit:cover; }
+  .m-prod-body { padding:7px 8px 8px; }
+  .m-prod-name { font-size:11px; font-weight:600; line-height:1.35; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .m-prod-meta { font-size:10px; color:var(--text-3); margin-top:3px; }
+  .m-prod-check { position:absolute; top:6px; right:6px; width:19px; height:19px; border-radius:50%; background:var(--green); color:#fff; font-size:11px; display:none; align-items:center; justify-content:center; }
+  .m-prod.matched .m-prod-check { display:flex; }
+  .m-prod-tag { position:absolute; top:6px; left:6px; font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(240,168,92,0.92); color:#3a2510; font-weight:600; max-width:80%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .m-empty-hint { color:var(--text-3); font-size:12px; padding:14px 0; line-height:1.7; }
+  .m-propose { display:block; width:100%; text-align:center; margin-top:16px; padding:11px; background:linear-gradient(135deg,var(--violet),var(--blue)); border-radius:9px; color:#fff; font-weight:600; font-size:13px; }
+  .m-propose.disabled { opacity:.4; pointer-events:none; }
+
+  /* ── Table ── */
+  .table-panel { margin-top: 14px; }
+  .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-tabs button {
+    font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+    color: var(--text-2); background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px; transition: all .12s;
+  }
+  .cat-tabs button:hover { color: var(--text); }
+  .cat-tabs button.on {
+    color: #fff; border-color: transparent;
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    font-weight: 600;
+  }
+  .search {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; color: var(--text); font-family: inherit; font-size: 13px; width: 220px; max-width: 100%;
+  }
+  .search:focus { outline: none; border-color: var(--violet); }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th {
+    text-align: left; font-size: 11px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .tbl td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .tbl tbody tr { cursor: pointer; }
+  .tbl tbody tr:hover { background: var(--panel-2); }
+  .kw-cell { display: flex; align-items: center; gap: 10px; min-width: 180px; }
+  .kw-thumb { width: 36px; height: 36px; border-radius: 8px; background: var(--panel-2); flex-shrink: 0;
+    overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 14px; }
+  .kw-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .kw-name { font-weight: 600; text-transform: capitalize; }
+  .kw-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; max-width: 380px;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .stage { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .stage.new { color: var(--blue); background: rgba(92,168,255,0.12); }
+  .stage.rising { color: var(--green); background: var(--green-bg); }
+  .stage.steady { color: var(--text-2); background: var(--panel-2); }
+  .cat-cell, .date-cell, .who-cell { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+  .tbl-empty { text-align: center; color: var(--text-3); padding: 34px 10px; font-size: 13px; }
+  .tbl-scroll { overflow-x: auto; }
+
+  /* ── Sheet ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: flex-start; justify-content: center; z-index: 50; overflow-y: auto; padding: 40px 16px; }
+  .overlay.show { display: flex; }
+  .sheet { background: var(--panel); max-width: 620px; width: 100%; border: 1px solid var(--border); border-radius: 14px; padding: 22px; position: relative; }
+  .sheet-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-2); }
+  .sheet h3 { font-size: 20px; font-weight: 700; text-transform: capitalize; }
+  .sheet .sheet-sub { font-size: 12px; color: var(--text-3); margin: 4px 0 14px; }
+  .sig-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .sig-row .simg { width: 76px; height: 76px; flex-shrink: 0; background: var(--panel-2); border-radius: 10px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+  .sig-row img { width: 100%; height: 100%; object-fit: cover; }
+  .sig-row .stxt { font-size: 13px; line-height: 1.6; }
+  .sig-row .squote { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .sig-row .smeta { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+  .sig-row .smeta a { color: var(--blue); }
+
+  /* mobile */
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; gap: 10px; padding: 12px 16px; border-right: none; border-bottom: 1px solid var(--border); }
+    .logo { padding: 0; flex: 1; }
+    .nav, .side-note { display: none; }
+    .side-bottom { margin: 0; padding: 0; border: none; }
+    .main { padding: 18px 16px 50px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="mark">TS</div>
+      <div><b>Trend Signal</b><small>F&amp;F Trend Intelligence</small></div>
+    </div>
+    <nav class="nav">
+      <a href="#" data-view="overview" class="on" id="navOverview"><span class="ico">◧</span> Overview</a>
+      <a href="#" data-view="research" id="navResearch"><span class="ico">◎</span> Research</a>
+      <a href="#" data-view="matching" id="navMatching"><span class="ico">⇄</span> Matching</a>
+      <a href="#" data-view="proposals" id="navProposals"><span class="ico">✎</span> Proposals</a>
+      <a href="#" data-view="keywords" id="navKeywords"><span class="ico">☰</span> Keywords</a>
+      <a href="./02_signal_box.html" target="_blank"><span class="ico">＋</span> Signal Box</a>
+    </nav>
+    <div class="side-bottom">
+      <a class="add-btn" href="./02_signal_box.html" target="_blank">＋ 시그널 등록</a>
+      <div class="side-note">SIGNAL BOX가 같은 폴더에<br>있을 때 버튼이 작동해요</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar" id="overview">
+      <div>
+        <h1 id="pageTitle">이번 달 트렌드 시그널</h1>
+        <p id="pageSub">키워드 발굴은 팀 시그널 · 검증은 네이버 검색량 지수</p>
+      </div>
+      <select id="monthSelect"></select>
+    </div>
+
+    <div class="ov-modes" id="ovModes"></div>
+    <div class="ov-cats" id="ovCats"></div>
+    <div class="hero" id="hero"></div>
+
+    <div class="row2" id="row2">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>네이버 검색량 추이 — Top 5</h2>
+          <span id="chartStatus" style="font-size:11px;color:var(--text-3)"></span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>검색량 변화</h2><span style="font-size:11px;color:var(--text-3)">최근 4주 vs 이전 4주</span></div>
+        <div class="topkw" id="topkw"></div>
+      </div>
+    </div>
+
+    <div class="panel table-panel" id="latestPanel">
+      <div class="panel-head">
+        <h2>Brand Radar</h2>
+        <span style="font-size:11px;color:var(--text-3)">이번 달 각 브랜드가 주목할 트렌드 — AI 적합도 × 네이버 검색 증감</span>
+      </div>
+      <div class="brand-grid" id="brandRadar"></div>
+    </div>
+
+    <div class="panel table-panel" id="researchPanel" style="display:none">
+      <div class="panel-head">
+        <h2>Research Radar</h2>
+        <span style="font-size:11px;color:var(--text-3)">런웨이·매체 기사에서 수집한 시즌 트렌드 — 팀 목격 시그널과 별도</span>
+      </div>
+      <div class="research-cats" id="researchCats"></div>
+      <div class="research-grid" id="researchGrid"></div>
+    </div>
+
+    <div class="panel table-panel" id="matchingPanel" style="display:none">
+      <div class="match-status" id="matchStatus">시장 신상 아카이브 불러오는 중…</div>
+      <div class="match-board">
+        <div>
+          <div class="mb-col-title"><span class="dot" style="background:var(--blue)"></span>트렌드 <span id="mTrendCount" style="color:var(--text-3)"></span></div>
+          <div class="cat-tabs" id="mCatTabs" style="margin-bottom:12px"></div>
+          <div id="mTrendList"></div>
+        </div>
+        <div>
+          <div class="mb-col-title"><span class="dot" style="background:var(--violet)"></span>시장 신상 매칭</div>
+          <div class="m-panel" id="mMatchPanel"><div class="mp-empty2">← 트렌드를 선택하세요</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel table-panel" id="proposalsPanel" style="display:none">
+      <div class="prop-toolbar">
+        <div class="seg" id="propBrandSeg"></div>
+        <a class="prop-new" href="./11_proposal_edit.html">＋ 새 제안</a>
+      </div>
+      <div class="prop-list" id="propList"></div>
+    </div>
+
+    <div class="panel table-panel" id="keywordsPanel" style="display:none">
+      <div class="panel-head">
+        <h2>Keyword History</h2>
+        <div class="cat-tabs" id="catTabs"></div>
+        <select id="periodSelect" style="font-size:12px;padding:7px 10px">
+          <option value="52">최근 1년</option>
+          <option value="26">최근 6개월</option>
+          <option value="13" selected>최근 3개월</option>
+          <option value="4">최근 4주</option>
+          <option value="1">최근 1주</option>
+        </select>
+        <input class="search" id="search" type="text" placeholder="키워드 · 카테고리 검색">
+      </div>
+      <div class="tbl-scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Keyword</th><th>Category</th><th>Stage</th><th id="thSpark">검색량 추이</th><th id="thDelta">증감</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <button class="sheet-close" id="sheetClose" aria-label="닫기">×</button>
+    <h3 id="sheetTitle"></h3>
+    <div class="sheet-sub" id="sheetSub"></div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+<script>
+const SUPABASE_URL = "https://bmfehgkfueeiwkhgxwvs.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_D444jYf-8FaJsPl7YJ6Cew_kKfcWIwP";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const APPAREL_CATS = ['outer', 'top', 'pants', 'skirt', 'dress'];
+const ACC_CATS = ['bag', 'shoes', 'acc'];
+
+let all = [];            // 전체 시그널 (전 기간)
+let months = [], curMonth = null, chart = null, tableRows = [];
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+// 트렌드의 대표 이미지: 매칭된 시장 신상 이미지 우선, 없으면 팀 캡처
+function trendImg(sig) {
+  if (sig.image_url) return sig.image_url;
+  const kw = (sig.keywords || [])[0];
+  if (kw && matchedImgByKw[kw]) return matchedImgByKw[kw];
+  return null;
+}
+let matchedImgByKw = {};   // keyword → 매칭된 시장 신상 이미지 URL (Overview 로드시 채움)
+const fmtDate = iso => { const d = new Date(iso); return (d.getMonth() + 1) + '.' + d.getDate(); };
+
+function monthLabel(m) {
+  const [y, mo] = m.split('-');
+  return y + '년 ' + (+mo) + '월';
+}
+function prevMonthOf(m) {
+  const [y, mo] = m.split('-').map(Number);
+  const d = new Date(y, mo - 2, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function catLabel(s) {
+  if (s.signal_type === 'lifestyle') return 'Lifestyle';
+  if (s.category === 'brand') return 'Brand';
+  if (APPAREL_CATS.includes(s.category)) return 'Apparel';
+  if (ACC_CATS.includes(s.category)) return 'Acc';
+  return 'Etc';
+}
+
+/* ── 데이터 ── */
+async function loadAll() {
+  const { data } = await sb.from('signals')
+    .select('id,created_at,author,note,url,image_url,keywords,brand_fit,ai_summary,signal_type,source_type,category,month_bucket')
+    .order('created_at', { ascending: false })
+    .limit(2000);
+  all = data || [];
+  months = [...new Set(all.map(r => r.month_bucket).filter(Boolean))].sort().reverse();
+  if (!months.length) months = [new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit' }).format(new Date())];
+  const sel = document.getElementById('monthSelect');
+  sel.innerHTML = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.onchange = () => { curMonth = sel.value; render(); };
+  curMonth = months[0];
+}
+
+function ofMonth(m) { return all.filter(s => s.month_bucket === m); }
+
+/* ── 매칭 데이터 로드 (Overview 히어로 이미지·순위용) ── */
+let matchCountByTrend = {};   // trend_id → 매칭된 시장 신상 수
+async function loadMatchData() {
+  try {
+    const [matRes] = await Promise.all([ sb.from('matches').select('trend_id,item_id') ]);
+    const matches = matRes.data || [];
+    // 시장 신상 시트 로드 (id → 이미지), 팀 등록 신상 이미지도 포함
+    const sheetRows = await loadAllSheets();
+    const imgByPid = {};
+    for (const r of sheetRows) if (r.image) imgByPid[r._id] = r.image;
+    for (const s of all) if (s.source_type === 'item' && s.image_url) imgByPid[s.id] = s.image_url;
+    // 트렌드별 매칭 수 + 대표 이미지
+    for (const m of matches) {
+      matchCountByTrend[m.trend_id] = (matchCountByTrend[m.trend_id] || 0) + 1;
+      const trend = all.find(s => s.id === m.trend_id);
+      const kw = trend && (trend.keywords || [])[0];
+      if (kw && !matchedImgByKw[kw] && imgByPid[m.item_id]) matchedImgByKw[kw] = imgByPid[m.item_id];
+    }
+  } catch (e) {}
+}
+
+function clusterize(signals) {
+  const map = {};
+  for (const s of signals) for (const k of (s.keywords || [])) (map[k] ??= []).push(s);
+  return Object.entries(map).map(([keyword, sigs]) => ({ keyword, sigs, count: sigs.length }));
+}
+
+/* ── Overview 카테고리 필터 ── */
+const OV_MODES = { item:'아이템 시그널', lifestyle:'라이프스타일 시그널' };
+let ovMode = 'item';
+
+// 아이템 모드 카테고리 (상품 복종)
+const OV_CATS_ITEM = {
+  all: { label:'전체', match:null },
+  tshirt: { label:'티셔츠·상의', match:['top'] },
+  outer: { label:'아우터', match:['outer'] },
+  pants: { label:'하의', match:['pants','skirt','dress'] },
+  shoes: { label:'슈즈', match:['shoes'] },
+  bag: { label:'백·잡화', match:['bag','acc'] },
+};
+// 라이프스타일 모드 카테고리 (무브먼트 성격)
+const OV_CATS_LIFE = {
+  all: { label:'전체', match:null },
+};
+let ovCat = 'all';
+function ovCatsSet() { return ovMode === 'lifestyle' ? OV_CATS_LIFE : OV_CATS_ITEM; }
+
+function renderOvModes() {
+  document.getElementById('ovModes').innerHTML = Object.entries(OV_MODES)
+    .map(([k, v]) => `<button data-m="${k}" class="${k === ovMode ? 'on' : ''}">${v}</button>`).join('');
+  document.getElementById('ovModes').onclick = e => {
+    if (!e.target.dataset.m) return;
+    ovMode = e.target.dataset.m; ovCat = 'all';
+    renderOvModes(); renderOvCats(); rerenderOverview();
+  };
+}
+
+function renderOvCats() {
+  const cats = ovCatsSet();
+  const el = document.getElementById('ovCats');
+  // 라이프스타일은 카테고리가 전체뿐이라 탭 숨김
+  el.style.display = Object.keys(cats).length <= 1 ? 'none' : '';
+  el.innerHTML = Object.entries(cats)
+    .map(([k, v]) => `<button data-c="${k}" class="${k === ovCat ? 'on' : ''}">${v.label}</button>`).join('');
+  el.onclick = e => {
+    if (!e.target.dataset.c) return;
+    ovCat = e.target.dataset.c; renderOvCats(); rerenderOverview();
+  };
+}
+
+function ovFilteredSignals() {
+  const base = ofMonth(curMonth);
+  // 모드로 먼저 가름: 아이템(product) vs 라이프스타일
+  const byMode = base.filter(s => ovMode === 'lifestyle' ? s.signal_type === 'lifestyle' : s.signal_type !== 'lifestyle');
+  const cat = ovCatsSet()[ovCat];
+  if (!cat || !cat.match) return byMode;
+  return byMode.filter(s => cat.match.includes(s.category));
+}
+
+/* ── Top 5 계산 (히어로 · 차트 · 검색량 패널 공용) ── */
+function computeTop() {
+  const cur = ovFilteredSignals();
+  const prevCl = clusterize(ofMonth(prevMonthOf(curMonth)));
+  const prevCountOf = k => { const f = prevCl.find(c => c.keyword === k); return f ? f.count : 0; };
+  return clusterize(cur)
+    .map(c => {
+      const p = prevCountOf(c.keyword);
+      // 매칭된 시장 신상 수 합산 (이 키워드의 시그널들에 걸린 매칭)
+      let matchCount = 0;
+      for (const s of c.sigs) matchCount += (matchCountByTrend[s.id] || 0);
+      const heat = c.count + matchCount;   // 팀 목격 + 시장 반응
+      return { ...c, matchCount, heat, stage: p === 0 ? 'new' : (c.count > p ? 'rising' : 'steady') };
+    })
+    .sort((a, b) => {
+      // 이미지(매칭 or 캡처) 있는 것 우선 → 그다음 heat 점수
+      const ai = (a.sigs.some(s => s.image_url) || a.sigs.some(s => matchedImgByKw[(s.keywords||[])[0]])) ? 1 : 0;
+      const bi = (b.sigs.some(s => s.image_url) || b.sigs.some(s => matchedImgByKw[(s.keywords||[])[0]])) ? 1 : 0;
+      return bi - ai || b.heat - a.heat;
+    })
+    .slice(0, 5);
+}
+
+/* 카테고리 탭 변경 시 Overview만 다시 그림 */
+function rerenderOverview() {
+  const top = computeTop();
+  renderHero(top);
+  renderNaver(top);
+  renderBrandRadar();
+}
+
+/* ── Hero: 이번 달 톱 스타일 ── */
+function renderHero(top) {
+  const STAGE = { new: 'New', rising: 'Rising', steady: 'Steady' };
+  document.getElementById('hero').innerHTML = top.length
+    ? top.map((c, i) => {
+        const rep = c.sigs.find(s => s.image_url) || c.sigs[0];
+        const img = trendImg(rep) || (c.sigs.map(trendImg).find(Boolean));
+        return `<div class="hcard" onclick='openSheet(${JSON.stringify(esc(c.keyword))})'>
+          <span class="h-rank">${i + 1}</span>
+          <span class="h-stage ${c.stage}">${STAGE[c.stage]}</span>
+          <div class="h-img">${img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='◇'">` : '◇'}</div>
+          <div class="h-body">
+            <div class="h-kw">${esc(c.keyword)}</div>
+            <div class="h-cat">${catLabel(c.sigs[0])}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div class="tbl-empty" style="grid-column:1/-1">이번 달 시그널이 아직 없어요</div>';
+}
+
+/* ── 네이버 검색량 (keyword-trend Edge Function 경유) ── */
+const LINE_COLORS = ['#5CA8FF', '#8B7CF6', '#34C08B', '#F0A85C', '#F06A6A'];
+let kwMap = null;
+
+async function loadKwMap() {
+  if (kwMap) return kwMap;
+  kwMap = {};
+  try {
+    const { data } = await sb.from('keyword_map').select('keyword,kr');
+    for (const r of (data || [])) kwMap[r.keyword] = r.kr;
+  } catch (e) {}
+  return kwMap;
+}
+
+async function renderNaver(top) {
+  const status = document.getElementById('chartStatus');
+  const panel = document.getElementById('topkw');
+  if (!top.length) {
+    status.textContent = '';
+    panel.innerHTML = '<div class="tbl-empty">키워드가 아직 없어요</div>';
+    if (chart) { chart.destroy(); chart = null; }
+    return;
+  }
+  status.textContent = '네이버 데이터랩 조회 중…';
+  try {
+    const map = await loadKwMap();
+    const groups = top.map(c => ({ name: c.keyword, kr: map[c.keyword] || c.keyword }));
+    const { data, error } = await sb.functions.invoke('keyword-trend', { body: { groups, weeks: 16 } });
+    if (error || !data || !data.results) throw new Error(error?.message || data?.errorMessage || data?.error || 'no data');
+    drawNaverChart(data);
+    drawDeltaPanel(data, map);
+    status.textContent = '상대 검색량 지수 · 주간 · 네이버 데이터랩';
+  } catch (e) {
+    status.textContent = '';
+    if (chart) { chart.destroy(); chart = null; }
+    panel.innerHTML = `<div class="tbl-empty">네이버 검색량 연동이 아직 안 됐어요<br>
+      keyword-trend 함수 배포 + 네이버 API 키 등록 후 표시됩니다</div>`;
+  }
+}
+
+function drawNaverChart(res) {
+  const labels = (res.results[0]?.data || []).map(d => {
+    const p = d.period.slice(5).split('-');
+    return (+p[0]) + '.' + (+p[1]);
+  });
+  const datasets = res.results.map((r, i) => ({
+    label: r.title,
+    data: r.data.map(d => d.ratio),
+    borderColor: LINE_COLORS[i % 5],
+    backgroundColor: 'transparent',
+    tension: 0.4, pointRadius: 0, borderWidth: 2,
+  }));
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#9A9CA5', boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 11 } } },
+        tooltip: { backgroundColor: '#1C1D22', borderColor: '#26272D', borderWidth: 1 },
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6C6E78', font: { size: 11 }, maxTicksLimit: 8 } },
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6C6E78', font: { size: 11 } } },
+      },
+    },
+  });
+}
+
+/* ── 검색량 변화 패널 (최근 4주 vs 이전 4주) ── */
+function drawDeltaPanel(res, map) {
+  const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+  const items = res.results.map((r, i) => {
+    const v = r.data.map(d => d.ratio);
+    const recent = avg(v.slice(-4)), before = avg(v.slice(-8, -4));
+    const pct = before > 0 ? Math.round((recent - before) / before * 100) : null;
+    return { title: r.title, kr: (r.keywords || [])[0] || map[r.title] || '', pct, color: LINE_COLORS[i % 5] };
+  });
+  document.getElementById('topkw').innerHTML = items.map(it => `
+    <div class="tk" onclick='openSheet(${JSON.stringify(esc(it.title))})'>
+      <div class="tk-row">
+        <span class="tk-name"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${it.color};margin-right:8px"></i>${esc(it.title)}</span>
+        <span class="${it.pct === null ? 'tk-cat' : (it.pct >= 0 ? 'delta-up' : 'delta-down')}">${it.pct === null ? '—' : (it.pct >= 0 ? '▲ +' : '▼ ') + it.pct + '%'}</span>
+      </div>
+      <div class="tk-cat" style="margin-top:4px">"${esc(it.kr)}" · 네이버 검색</div>
+    </div>`).join('');
+}
+
+/* ── 테이블용 키워드별 검색량 (기간 선택 + 배치 조회 + 캐시) ── */
+let trendCache = {};   // "keyword@weeks" → ratio[] 또는 null
+let curWeeks = 13;     // 기본 3개월 (주 단위)
+
+// 기간별 증감 비교 구간: 전체를 반으로 나눠 앞/뒤 평균 비교
+function deltaOf(v) {
+  if (!v || v.length < 2) return null;
+  const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+  const half = Math.max(1, Math.floor(v.length / 2));
+  const before = avg(v.slice(0, half)), recent = avg(v.slice(-half));
+  return before > 0 ? Math.round((recent - before) / before * 100) : null;
+}
+function sparkline(vals, color) {
+  const w = 92, h = 26;
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const range = (max - min) || 1;
+  const pts = vals.map((v, i) =>
+    `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 2 - ((v - min) / range) * (h - 4)).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function cacheKey(k) { return k + '@' + curWeeks; }
+function paintTrendCells() {
+  document.querySelectorAll('.spark-cell, .delta-cell').forEach(td => {
+    const k = td.dataset.kw;
+    const key = cacheKey(k);
+    if (!(key in trendCache)) return;
+    const v = trendCache[key];
+    const d = v && v.length ? deltaOf(v) : null;
+    if (td.classList.contains('spark-cell')) {
+      td.innerHTML = (v && v.length > 1 && Math.max(...v) > 0)
+        ? sparkline(v, d === null ? '#6C6E78' : (d >= 0 ? '#34C08B' : '#F06A6A'))
+        : '<span style="color:var(--text-3)">—</span>';
+    } else {
+      td.innerHTML = d === null
+        ? '<span style="color:var(--text-3)">—</span>'
+        : `<span class="${d >= 0 ? 'delta-up' : 'delta-down'}">${d >= 0 ? '▲ +' : '▼ '}${d}%</span>`;
+    }
+  });
+}
+async function fillTrends(rows) {
+  const map = await loadKwMap();
+  const weeks = curWeeks;
+  const need = [...new Set(rows.map(r => r.keyword))].filter(k => !(cacheKey(k) in trendCache));
+  for (let i = 0; i < need.length; i += 5) {
+    const batch = need.slice(i, i + 5);
+    try {
+      const { data, error } = await sb.functions.invoke('keyword-trend', {
+        body: { groups: batch.map(k => ({ name: k, kr: map[k] || k })), weeks },
+      });
+      if (error || !data?.results) throw 0;
+      for (const r of data.results) trendCache[r.title + '@' + weeks] = r.data.map(d => d.ratio);
+      for (const k of batch) if (!((k + '@' + weeks) in trendCache)) trendCache[k + '@' + weeks] = null;
+    } catch (e) {
+      for (const k of batch) trendCache[k + '@' + weeks] = null;
+    }
+    if (weeks === curWeeks) paintTrendCells();
+  }
+}
+
+/* ── 테이블 ── */
+function buildRows() {
+  const cur = ofMonth(curMonth);
+  const prevCl = clusterize(ofMonth(prevMonthOf(curMonth)));
+  const prevCountOf = k => { const f = prevCl.find(c => c.keyword === k); return f ? f.count : 0; };
+  tableRows = clusterize(cur).map(c => {
+    const allTime = all.filter(s => (s.keywords || []).includes(c.keyword));
+    const firstSeen = allTime.reduce((m, s) => Math.min(m, new Date(s.created_at).getTime()), Infinity);
+    const lastSeen = c.sigs.reduce((m, s) => Math.max(m, new Date(s.created_at).getTime()), 0);
+    const p = prevCountOf(c.keyword);
+    const stage = p === 0 ? 'new' : (c.count > p ? 'rising' : 'steady');
+    const rep = c.sigs.find(s => s.image_url) || c.sigs[0];
+    return {
+      keyword: c.keyword, cat: catLabel(c.sigs[0]), stage,
+      firstSeen, lastSeen,
+      spotters: [...new Set(c.sigs.map(s => s.author).filter(Boolean))],
+      thumb: rep.image_url, desc: rep.ai_summary || rep.note || '',
+    };
+  }).sort((a, b) => b.lastSeen - a.lastSeen);
+}
+const STAGE_LABEL = { new: 'New', rising: 'Rising', steady: 'Steady' };
+const CAT_TABS = ['All', 'Lifestyle', 'Apparel', 'Acc', 'Brand', 'Etc'];
+let curCat = 'All';
+
+function renderCatTabs() {
+  const el = document.getElementById('catTabs');
+  // 데이터에 없는 카테고리 탭은 숨김 (All 제외)
+  const present = new Set(tableRows.map(r => r.cat));
+  el.innerHTML = CAT_TABS
+    .filter(c => c === 'All' || present.has(c))
+    .map(c => `<button data-c="${c}" class="${c === curCat ? 'on' : ''}">${c}</button>`).join('');
+  el.onclick = e => {
+    if (!e.target.dataset.c) return;
+    curCat = e.target.dataset.c;
+    renderCatTabs();
+    renderTable();
+  };
+}
+
+function renderTable() {
+  updatePeriodLabels();
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const rows = tableRows.filter(r =>
+    (curCat === 'All' || r.cat === curCat) &&
+    (!q || r.keyword.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q)));
+  document.getElementById('tbody').innerHTML = rows.length
+    ? rows.map(r => `
+      <tr onclick='openSheet(${JSON.stringify(esc(r.keyword))})'>
+        <td><div class="kw-cell">
+          <div class="kw-thumb">${r.thumb ? `<img src="${esc(r.thumb)}" alt="" loading="lazy">` : '◇'}</div>
+          <div><div class="kw-name">${esc(r.keyword)}</div><div class="kw-desc">${esc(r.desc)}</div></div>
+        </div></td>
+        <td class="cat-cell">${r.cat}</td>
+        <td><span class="stage ${r.stage}">${STAGE_LABEL[r.stage]}</span></td>
+        <td class="spark-cell" data-kw="${esc(r.keyword)}"><span style="color:var(--text-3)">…</span></td>
+        <td class="delta-cell" data-kw="${esc(r.keyword)}"><span style="color:var(--text-3)">…</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="tbl-empty">결과가 없어요</td></tr>';
+  paintTrendCells();
+  fillTrends(rows);
+}
+document.getElementById('search').addEventListener('input', renderTable);
+
+const PERIOD_LABEL = { 52:'1년', 26:'6개월', 13:'3개월', 4:'4주', 1:'1주' };
+function updatePeriodLabels() {
+  const lbl = PERIOD_LABEL[curWeeks] || curWeeks + '주';
+  const th1 = document.getElementById('thSpark'), th2 = document.getElementById('thDelta');
+  if (th1) th1.textContent = '검색량 추이 · ' + lbl;
+  if (th2) th2.textContent = '증감 · ' + lbl;
+}
+document.getElementById('periodSelect').addEventListener('change', e => {
+  curWeeks = parseInt(e.target.value, 10);
+  updatePeriodLabels();
+  renderTable();   // 새 기간으로 스파크라인·증감 다시 조회
+});
+
+/* ── 상세 시트 ── */
+window.openSheet = function (keyword) {
+  const sigs = all.filter(s => (s.keywords || []).includes(keyword))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+  document.getElementById('sheetTitle').textContent = keyword;
+  document.getElementById('sheetSub').textContent = sigs.length + '건 수집 · 전체 기간';
+  document.getElementById('sheetBody').innerHTML = sigs.map(s => `
+    <div class="sig-row">
+      <div class="simg">${s.image_url ? `<a href="${esc(s.image_url)}" target="_blank" rel="noopener"><img src="${esc(s.image_url)}" alt="" loading="lazy"></a>` : '🔗'}</div>
+      <div>
+        <div class="stxt">${esc(s.ai_summary || s.note || '')}</div>
+        ${s.note && s.ai_summary ? `<div class="squote">"${esc(s.note)}"</div>` : ''}
+        <div class="smeta">${esc(s.author || '?')} · ${new Date(s.created_at).toLocaleDateString('ko-KR')}
+          ${s.url ? ` · <a href="${esc(s.url)}" target="_blank" rel="noopener">원본</a>` : ''}
+          ${s.image_url ? ` · <a href="${esc(s.image_url)}" target="_blank" rel="noopener">이미지</a>` : ''}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('overlay').classList.add('show');
+};
+document.getElementById('sheetClose').onclick = () => document.getElementById('overlay').classList.remove('show');
+document.getElementById('overlay').onclick = e => { if (e.target.id === 'overlay') e.target.classList.remove('show'); };
+
+/* ── 렌더 ── */
+/* ── Brand Radar (Overview 하단) ── */
+function renderBrandRadar() {
+  const NAMES = { mlb: 'MLB', discovery: 'Discovery', sergio: 'Sergio Tacchini', duvetica: 'Duvetica' };
+  const clusters = clusterize(ovFilteredSignals());
+  document.getElementById('brandRadar').innerHTML = Object.keys(NAMES).map(b => {
+    const top = clusters.map(c => {
+      let fit = 0;
+      for (const s of c.sigs) fit = Math.max(fit, s.brand_fit?.[b] ?? 0);
+      return { ...c, fit };
+    }).filter(c => c.fit >= 0.6)
+      .sort((x, y) => y.fit - x.fit || y.count - x.count)
+      .slice(0, 3);
+
+    const items = top.length
+      ? top.map(c => {
+          const rep = c.sigs.find(s => s.image_url) || c.sigs[0];
+          const bimg = trendImg(rep) || (c.sigs.map(trendImg).find(Boolean));
+          return `<div class="br-item" onclick='openSheet(${JSON.stringify(esc(c.keyword))})'>
+            <div class="br-thumb">${bimg ? `<img src="${esc(bimg)}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='◇'">` : '◇'}</div>
+            <div class="br-info">
+              <div class="br-kw">${esc(c.keyword)}</div>
+              <div class="br-fit">적합도 ${Math.round(c.fit * 100)}%</div>
+            </div>
+            <span class="delta-cell br-delta" data-kw="${esc(c.keyword)}"><span style="color:var(--text-3)">…</span></span>
+          </div>`;
+        }).join('')
+      : '<div class="br-empty">이번 달 적합 시그널 없음</div>';
+    return `<div class="br-col"><h5>${NAMES[b]}</h5>${items}</div>`;
+  }).join('');
+  paintTrendCells();   // 캐시에 있으면 즉시 채움
+  // Brand Radar에 뜬 키워드들 네이버 검색량 조회 (아직 캐시에 없으면)
+  const radarKws = [...document.querySelectorAll('#brandRadar .br-delta')].map(el => ({ keyword: el.dataset.kw }));
+  if (radarKws.length) fillTrends(radarKws);
+}
+
+/* ── 뷰 전환 ── */
+let curView = 'overview';
+function applyView() {
+  const v = curView;
+  ['hero','row2','latestPanel'].forEach(id => document.getElementById(id).style.display = v === 'overview' ? '' : 'none');
+  document.getElementById('ovCats').style.display = v === 'overview' ? '' : 'none';
+  document.getElementById('researchPanel').style.display = v === 'research' ? '' : 'none';
+  document.getElementById('matchingPanel').style.display = v === 'matching' ? '' : 'none';
+  document.getElementById('proposalsPanel').style.display = v === 'proposals' ? '' : 'none';
+  document.getElementById('keywordsPanel').style.display = v === 'keywords' ? '' : 'none';
+
+  document.getElementById('navOverview').classList.toggle('on', v === 'overview');
+  document.getElementById('navResearch').classList.toggle('on', v === 'research');
+  document.getElementById('navMatching').classList.toggle('on', v === 'matching');
+  document.getElementById('navProposals').classList.toggle('on', v === 'proposals');
+  document.getElementById('navKeywords').classList.toggle('on', v === 'keywords');
+
+  const titles = {
+    overview: [monthLabel(curMonth) + ' 트렌드 시그널', '키워드 발굴은 팀 시그널 · 검증은 네이버 검색량 지수'],
+    research: ['시즌 트렌드 리서치', '런웨이·매체 기사에서 수집한 SS/FW 트렌드 — 근거 기사 링크 포함'],
+    matching: ['트렌드 · 시장 신상 매칭', '트렌드를 고르면 그 트렌드로 나온 시장 신상(경쟁사)을 찾아줍니다'],
+    proposals: ['브랜드별 트렌드 제안', '팀이 직접 큐레이션한 상품기획 방향 — 근거는 시그널과 네이버 검색량'],
+    keywords: ['키워드 전체 보기', '이번 달 포착된 모든 키워드 — 탭·검색으로 필터링하세요'],
+  };
+  document.getElementById('pageTitle').textContent = titles[v][0];
+  document.getElementById('pageSub').textContent = titles[v][1];
+}
+function setView(v) {
+  curView = v;
+  applyView();
+  if (v === 'research') renderResearch();
+  if (v === 'matching') initMatching();
+  if (v === 'proposals') loadProposals();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (v === 'keywords') document.getElementById('search').focus();
+}
+document.getElementById('navOverview').addEventListener('click', e => { e.preventDefault(); setView('overview'); });
+document.getElementById('navResearch').addEventListener('click', e => { e.preventDefault(); setView('research'); });
+document.getElementById('navMatching').addEventListener('click', e => { e.preventDefault(); setView('matching'); });
+document.getElementById('navProposals').addEventListener('click', e => { e.preventDefault(); setView('proposals'); });
+document.getElementById('navKeywords').addEventListener('click', e => { e.preventDefault(); setView('keywords'); });
+
+/* ── Matching (트렌드 ↔ 시장 신상 아카이브) ── */
+const SHEET_CSVS = [
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvYXQtzOfR1p8oy0QsJboB7ISEPJ5XDWvk9XSlCo26K3RPGkbTCrgWPDyPBVtJEbWH7trD_ygb78W/pub?output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTM4CmHdD1mVYoIJpCFwN3BL-CieosFTPUpeuI-mVmBtZyrp21Eo4aZT0W1sd8YPFvv8AIKVoqwjxkl/pub?output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRS7fhPv-WoZLXyCA_yvSih3AJ_0QknKITaWod3PFT-XFituL38V6Yzj4Vk_POIIRWZDeDUGR8Q0nSA/pub?output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRXHbfhMkjSHtL_1A9LnQgPi7qBSVzVmEXj4Sd21D1pZ4iV1Ed_4mbUPBcZ7eXFJiJm7Pv1Y3wRQmwr/pub?output=csv",
+];
+const SHEET_CSV = SHEET_CSVS[0];   // 하위호환
+const CAT_GROUP = {
+  top:['top','tops','knit','tshirt','shirt','sweater','blouse'],
+  outer:['outer','outerwear','jacket','coat','padding','down','vest'],
+  pants:['pants','bottom','bottoms','denim','trousers','jean','skirt'],
+  skirt:['skirt','bottom'], dress:['dress','onepiece'],
+  shoes:['shoe','shoes','sneakers','footwear'],
+  bag:['bag','bags'], acc:['acc','accessory','cap','hat','belt','muffler'],
+};
+const MCAT_KR = { outer:'아우터', outerwear:'아우터', top:'상의', pants:'하의', skirt:'스커트', dress:'원피스', bag:'백', shoes:'신발', acc:'액세서리' };
+
+// 트렌드 키워드별 매칭 힌트: 상품명에 실제 나올 브랜드·모델·단어
+// (시장 상품명이 "살로몬 XT-6 스카이라인..." 형태라 영문 키워드론 안 걸림)
+const MATCH_HINTS = {
+  'low profile sneaker': ['스피드캣','speedcat','타키온','로우','푸마','puma','오니츠카','onitsuka','삼바','samba','가젤','gazelle','스니커'],
+  'retro runner': ['뉴발란스','new balance','아식스','asics','gel','카르후','karhu','993','990','1130','써코니','saucony','2002'],
+  'trail sneaker': ['살로몬','salomon','xt-6','xt6','스피드크로스','speedcross','호카','hoka','메렐','merrell','고어텍스','gore','acs','트레일'],
+  'gorpcore': ['살로몬','salomon','호카','hoka','고어텍스','gore','아크테릭스','trail','트레일','고프','고프코어'],
+  'ballet sneaker': ['발레','ballet','메리제인','플랫','미우미우','miu miu'],
+  'sneaker charm': ['참','charm','키링','비즈'],
+  'mixed media': ['패치','믹스','콤비','레오파드','스플릿'],
+  'bold colorway': ['옐로우','yellow','레드','블루','그린','핑크','오렌지','원색'],
+  'butter yellow': ['버터','butter','옐로우','yellow','레몬'],
+  'fringe': ['프린지','fringe','태슬','tassel'],
+  'suede': ['스웨이드','suede','누벅'],
+  'metallic logo': ['메탈','metal','실버','골드','메탈릭'],
+  'noisy neutrals': ['뉴트럴','베이지','그레이','크림','오트밀','샌드','토프'],
+  'matching set': ['셋업','세트','set','투피스'],
+  'skinny fit': ['스키니','skinny','슬림','slim'],
+  'barrel leg': ['배럴','barrel','와이드','wide','벌룬','벌른'],
+  'wide fit': ['와이드','wide','벌룬','배기','baggy'],
+  'flip flop': ['쪼리','플립','flip','슬리퍼','슬라이드'],
+  'heat dressing': ['린넨','메시','시어서커','서머'],
+  'retro surf': ['서프','surf','보드','하와이안','트로피컬'],
+  'turquoise': ['터쿼이즈','turquoise','민트','청록'],
+  'sheer fabric': ['시스루','쉬어','sheer','시폰'],
+  'ruffle': ['러플','ruffle','프릴'],
+  'texture': ['텍스처','부클레','자카드','케이블'],
+  'running crew': ['러닝','running','런','조깅'],
+  'drop waist': ['드롭웨이스트','드롭'],
+  'cutout': ['컷아웃','cutout','오픈'],
+};
+
+let mProducts = [], mMatches = [], mActiveTrend = null, mSeasonFilter = 3, mLoaded = false, mShowAllCat = false;
+
+function mPick(row, names) {
+  const keys = Object.keys(row);
+  for (const n of names) {
+    const hit = keys.find(k => k.trim().toLowerCase() === n.toLowerCase());
+    if (hit && row[hit] != null && String(row[hit]).trim() !== '') return String(row[hit]).trim();
+  }
+  return '';
+}
+function seasonToNum(s) {
+  if (!s) return 0;
+  const m = s.match(/(20\d{2})[.\-/ ]?(\d{1,2})/);
+  if (m) return parseInt(m[1]) * 100 + parseInt(m[2]);
+  const fw = s.match(/(\d{2})\s*(SS|FW|F\/W|S\/S)/i);
+  if (fw) { const yr = 2000 + parseInt(fw[1]); return yr * 100 + (/F/i.test(fw[2]) ? 8 : 2); }
+  return 0;
+}
+function monthsAgoNum(m) { const d = new Date(); d.setMonth(d.getMonth() - m); return d.getFullYear() * 100 + (d.getMonth() + 1); }
+
+// 여러 게시 CSV를 병렬로 읽어 하나로 합침
+function parseSheet(url, offset) {
+  return new Promise(resolve => {
+    Papa.parse(url, {
+      download: true, header: true, skipEmptyLines: true,
+      complete: (res) => {
+        const rows = (res.data || []).map((r, i) => ({
+          _id: 'p' + (offset + i),
+          season: mPick(r, ['season','시즌']),
+          seasonNum: seasonToNum(mPick(r, ['season','시즌'])),
+          brand: mPick(r, ['brand','브랜드']),
+          category: mPick(r, ['category','카테고리']).toLowerCase(),
+          name: mPick(r, ['product_name','productname','상품명','name','product']),
+          color: mPick(r, ['color','컬러','colour']),
+          image: mPick(r, ['image_url','imageurl','이미지','picture','image']),
+        })).filter(p => p.name || p.image);
+        resolve(rows);
+      },
+      error: () => resolve([]),
+    });
+  });
+}
+async function loadAllSheets() {
+  const results = await Promise.all(SHEET_CSVS.map((u, i) => parseSheet(u, i * 100000)));
+  return results.flat();
+}
+
+async function initMatching() {
+  if (mLoaded) { renderMTrends(); return; }
+  mLoaded = true;
+  const [sheetRows, matRes] = await Promise.all([
+    loadAllSheets(),
+    sb.from('matches').select('*'),
+  ]);
+  mProducts = sheetRows;
+  mMatches = matRes.data || [];
+
+  // 팀이 SIGNAL BOX로 등록한 실물 신상(source_type='item')도 후보에 합침
+  const teamItems = all.filter(s => s.source_type === 'item').map(s => ({
+    _id: s.id,   // 실제 시그널 id 사용
+    season: monthLabel(s.month_bucket || ''),
+    seasonNum: s.month_bucket ? seasonToNum(s.month_bucket) : nowSeasonNum(),
+    brand: teamBrandLabel(s.brand_fit),
+    category: (s.category || '').toLowerCase(),
+    name: s.ai_summary || s.note || '팀 등록 신상',
+    color: '',
+    image: s.image_url || '',
+    isTeam: true,
+  }));
+  mProducts = [...teamItems, ...mProducts];
+
+  const st = document.getElementById('matchStatus');
+  const marketCount = mProducts.length - teamItems.length;
+  if (mProducts.length) {
+    st.className = 'match-status';
+    st.innerHTML = `신상 <b>${mProducts.length}건</b> (시장 ${marketCount} + 팀 등록 ${teamItems.length})`;
+  } else {
+    st.className = 'match-status err';
+    st.innerHTML = `시장 신상 시트를 못 읽었어요. <b>웹에 게시(CSV)</b> 상태인지 확인해주세요.`;
+  }
+  renderMTrends();
+}
+function nowSeasonNum() { const d = new Date(); return d.getFullYear() * 100 + (d.getMonth() + 1); }
+function teamBrandLabel(fit) {
+  if (!fit) return '팀 등록';
+  const KR = { mlb:'MLB', discovery:'디스커버리', sergio:'세르지오', duvetica:'듀베티카' };
+  for (const b of ['mlb','discovery','sergio','duvetica']) if ((fit[b] ?? 0) >= 1) return KR[b];
+  return '팀 등록';
+}
+
+function mCatMatch(trendCat, prodCat) {
+  if (!trendCat || !prodCat) return false;
+  return (CAT_GROUP[trendCat] || [trendCat]).some(g => prodCat.includes(g));
+}
+async function mKr(kw) {
+  const map = await loadKwMap();
+  return map[kw] || null;
+}
+function mProdScore(trend, p, krMap) {
+  const catOK = mCatMatch(trend.category, p.category);
+  // 트렌드에 카테고리가 있으면 카테고리 안 맞는 상품은 제외 (오매칭 방지)
+  if (trend.category && trend.category !== 'etc' && !catOK) return 0;
+
+  let score = 0;
+  const hay = (p.name + ' ' + p.color + ' ' + p.category + ' ' + p.brand).toLowerCase();
+  for (const k of (trend.keywords || [])) {
+    if (!k) continue;
+    if (hay.includes(k.toLowerCase())) score += 40;
+    const kr = krMap[k];
+    if (kr && (p.name + ' ' + p.color).includes(kr)) score += 40;
+    if (kr) { const frag = kr.replace(/\s/g, ''); if (frag.length >= 2 && (p.name).replace(/\s/g,'').includes(frag)) score += 25; }
+    const hints = MATCH_HINTS[k.toLowerCase()];
+    if (hints) {
+      for (const h of hints) {
+        if (hay.includes(h.toLowerCase())) { score += 35; break; }
+      }
+    }
+  }
+  if (catOK) score += 20;
+  return score;
+}
+
+const M_CATS = {
+  all: { label:'전체', match:null },
+  top: { label:'상의', match:['top'] },
+  outer: { label:'아우터', match:['outer'] },
+  pants: { label:'하의', match:['pants','skirt','dress'] },
+  shoes: { label:'슈즈', match:['shoes'] },
+  bag: { label:'백·잡화', match:['bag','acc'] },
+  etc: { label:'무브먼트', match:['etc'] },
+};
+let mCat = 'all';
+
+function mTrends() {
+  let ts = all.filter(s => s.source_type !== 'item');
+  const c = M_CATS[mCat];
+  if (c && c.match) ts = ts.filter(t => c.match.includes(t.category));
+  return ts;
+}
+
+function renderMCatTabs() {
+  document.getElementById('mCatTabs').innerHTML = Object.entries(M_CATS)
+    .map(([k, v]) => `<button data-c="${k}" class="${k === mCat ? 'on' : ''}">${v.label}</button>`).join('');
+  document.getElementById('mCatTabs').onclick = e => {
+    if (!e.target.dataset.c) return;
+    mCat = e.target.dataset.c; renderMCatTabs(); renderMTrends2();
+  };
+}
+
+function renderMTrends() {
+  renderMCatTabs();
+  renderMTrends2();
+}
+function renderMTrends2() {
+  const ts = mTrends();
+  document.getElementById('mTrendCount').textContent = `(${ts.length})`;
+  document.getElementById('mTrendList').innerHTML = ts.length ? ts.map(t => {
+    const kw = (t.keywords || [])[0] || '';
+    const n = mMatches.filter(m => m.trend_id === t.id).length;
+    return `<div class="m-trend-card ${mActiveTrend?.id === t.id ? 'active' : ''}" onclick="selectMTrend('${t.id}')">
+      <div class="mtc-head"><span class="mtc-kw">${esc(kw)}</span><span class="mtc-cat">${MCAT_KR[t.category] || t.category || '기타'}</span></div>
+      <div class="mtc-sum">${esc(t.ai_summary || t.note || '')}</div>
+      <div class="mtc-foot">${n > 0 ? `<span class="on">✓ ${n}개 매칭됨</span>` : '<span class="off">매칭 없음</span>'}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text-3);font-size:12px;padding:20px 0">이 카테고리 트렌드가 없어요</div>';
+}
+window.selectMTrend = id => { mActiveTrend = mTrends().find(t => t.id === id); mShowAllCat = false; renderMTrends2(); renderMMatchPanel(); };
+
+async function renderMMatchPanel() {
+  const t = mActiveTrend;
+  if (!t) return;
+  const kw = (t.keywords || [])[0] || '';
+  const krMap = await loadKwMap();
+
+  const cut = mSeasonFilter === 0 ? 0 : monthsAgoNum(mSeasonFilter);
+  const inWindow = mProducts.filter(p => p.seasonNum === 0 || p.seasonNum >= cut);
+  const matchedIds = new Set(mMatches.filter(m => m.trend_id === t.id).map(m => m.item_id));
+  const matched = inWindow.filter(p => matchedIds.has(p._id));
+
+  // 같은 카테고리 상품 (1차 필터)
+  const sameCat = inWindow.filter(p => !matchedIds.has(p._id) && mCatMatch(t.category, p.category));
+  // 힌트/키워드로 점수 매겨 정렬
+  const scored = sameCat.map(p => ({ p, score: mProdScore(t, p, krMap) }));
+  const hits = scored.filter(c => c.score > 20).sort((a, b) => b.score - a.score);   // 힌트까지 걸린 것
+  const catOnly = scored.filter(c => c.score <= 20).sort((a, b) => b.p.seasonNum - a.p.seasonNum);  // 카테고리만 맞는 것
+
+  const cands = (mShowAllCat ? [...hits, ...catOnly] : hits).slice(0, mShowAllCat ? 60 : 12);
+
+  const card = (p, m) => `<div class="m-prod ${m ? 'matched' : ''}" onclick="toggleMMatch('${p._id}')">
+    <div class="m-prod-check">✓</div>${p.brand ? `<span class="m-prod-tag" style="${p.isTeam ? 'background:rgba(139,124,246,0.92);color:#fff' : ''}">${p.isTeam ? '팀 · ' : ''}${esc(p.brand)}</span>` : ''}
+    <div class="m-prod-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '◇'}</div>
+    <div class="m-prod-body"><div class="m-prod-name">${esc(p.name || '상품')}</div>
+    <div class="m-prod-meta">${esc(p.season || '')}${p.color ? ' · ' + esc(p.color) : ''}</div></div></div>`;
+
+  const seasonOpts = [{v:3,t:'최근 3개월'},{v:6,t:'최근 6개월'},{v:12,t:'최근 1년'},{v:0,t:'전체 시즌'}]
+    .map(o => `<option value="${o.v}" ${o.v === mSeasonFilter ? 'selected' : ''}>${o.t}</option>`).join('');
+
+  const sameCatCount = sameCat.length;
+  document.getElementById('mMatchPanel').innerHTML = `
+    <div class="mp-t-head"><div class="mp-t-label">선택한 트렌드</div><div class="mp-t-kw">${esc(kw)}</div></div>
+    <div class="m-filter"><span>시즌 범위</span>
+      <select onchange="mSeasonFilter=parseInt(this.value);renderMMatchPanel()">${seasonOpts}</select>
+      <span>· ${MCAT_KR[t.category] || t.category || ''} ${sameCatCount}건 중</span></div>
+    ${matched.length ? `<div class="m-sec">매칭된 시장 신상 <span class="badge">${matched.length}</span></div><div class="m-grid">${matched.map(p => card(p, true)).join('')}</div>` : ''}
+    <div class="m-sec">
+      ${mShowAllCat ? `${MCAT_KR[t.category] || ''} 카테고리 전체` : 'AI 추천 후보'} <span class="badge">${cands.length}</span>
+      <button onclick="mShowAllCat=!mShowAllCat;renderMMatchPanel()" style="margin-left:auto;font-family:inherit;font-size:11px;color:var(--violet);background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;cursor:pointer">
+        ${mShowAllCat ? '추천만 보기' : '이 카테고리 전체 보기'}</button>
+    </div>
+    ${cands.length ? `<div class="m-grid">${cands.map(c => card(c.p, false)).join('')}</div>`
+      : `<div class="m-empty-hint">추천 후보가 없어요.<br>"이 카테고리 전체 보기"로 직접 골라보세요.</div>`}
+    <a class="m-propose ${matched.length ? '' : 'disabled'}" href="./11_proposal_edit.html">이 매칭으로 브랜드 제안 만들기 →</a>`;
+}
+
+window.toggleMMatch = async (pid) => {
+  const t = mActiveTrend;
+  const ex = mMatches.find(m => m.trend_id === t.id && m.item_id === pid);
+  if (ex) {
+    await sb.from('matches').delete().eq('trend_id', t.id).eq('item_id', pid);
+    mMatches = mMatches.filter(m => !(m.trend_id === t.id && m.item_id === pid));
+  } else {
+    await sb.from('matches').insert({ trend_id: t.id, item_id: pid, source:'human', status:'confirmed', author:'테스트' });
+    mMatches.push({ trend_id: t.id, item_id: pid });
+  }
+  renderMTrends(); renderMMatchPanel();
+};
+
+/* ── Research Radar ── */
+const RESEARCH_CATS = { all:'전체', silhouette:'실루엣', color:'컬러', fabric:'소재·디테일', detail:'소재·디테일', shoes:'슈즈', movement:'무브먼트' };
+const R_CAT_GROUPS = { all:null, silhouette:['silhouette'], color:['color'], 'fabric':['fabric','detail'], shoes:null, movement:['movement'] };
+let researchCat = 'all';
+
+function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+// 무료 스크린샷/메타이미지 프록시로 기사 대표 이미지 추정
+function articleThumb(url) {
+  if (!url) return null;
+  return 'https://api.microlink.io/?url=' + encodeURIComponent(url) + '&screenshot=false&meta=true&embed=image.url';
+}
+
+function renderResearchCats() {
+  const uniq = {};
+  Object.entries(RESEARCH_CATS).forEach(([k, v]) => { uniq[v] = uniq[v] || k; });
+  const seen = new Set();
+  const buttons = Object.entries(RESEARCH_CATS).filter(([k, v]) => { if (seen.has(v)) return false; seen.add(v); return true; });
+  document.getElementById('researchCats').innerHTML = buttons
+    .map(([k, v]) => `<button data-c="${k}" class="${k === researchCat ? 'on' : ''}">${v}</button>`).join('');
+  document.getElementById('researchCats').onclick = e => {
+    if (!e.target.dataset.c) return;
+    researchCat = e.target.dataset.c; renderResearchCats(); renderResearch();
+  };
+}
+
+function renderResearch() {
+  renderResearchCats();
+  let items = all.filter(s => s.source_type === 'research');
+  if (researchCat === 'shoes') items = items.filter(s => s.category === 'shoes');
+  else if (researchCat !== 'all') {
+    const axes = R_CAT_GROUPS[researchCat] || [researchCat];
+    items = items.filter(s => axes.includes(s.axis));
+  }
+  items = items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const grid = document.getElementById('researchGrid');
+  if (!items.length) { grid.innerHTML = '<div class="tbl-empty" style="grid-column:1/-1">해당 리서치 트렌드가 없어요</div>'; return; }
+
+  grid.innerHTML = items.map(s => {
+    const kw = (s.keywords || [])[0] || '';
+    const axisLabel = { silhouette:'실루엣', color:'컬러', fabric:'소재', detail:'디테일', movement:'무브먼트', styling:'스타일링' }[s.axis] || s.category;
+    return `<div class="rcard">
+      <div class="r-body">
+        <div class="r-top"><span class="r-kw">${esc(kw)}</span><span class="r-cat-txt">${axisLabel}</span></div>
+        <div class="r-sum">${esc(s.ai_summary || s.note || '')}</div>
+        <div class="r-src">
+          <span>${esc(hostOf(s.url))}</span>
+          ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">근거 기사 →</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Proposals ── */
+const PROP_BRANDS = { all:'All', mlb:'MLB', discovery:'Discovery', sergio:'Sergio', duvetica:'Duvetica' };
+let propBrand = 'all', proposalsData = null;
+
+function renderPropBrandSeg() {
+  document.getElementById('propBrandSeg').innerHTML = Object.entries(PROP_BRANDS)
+    .map(([k, v]) => `<button data-b="${k}" class="${k === propBrand ? 'on' : ''}">${v}</button>`).join('');
+  document.getElementById('propBrandSeg').onclick = e => {
+    if (!e.target.dataset.b) return;
+    propBrand = e.target.dataset.b; renderPropBrandSeg(); renderProposals();
+  };
+}
+async function loadProposals() {
+  renderPropBrandSeg();
+  document.getElementById('propList').innerHTML = '<div class="prop-empty">불러오는 중…</div>';
+  const { data } = await sb.from('proposals').select('*').order('updated_at', { ascending: false });
+  proposalsData = data || [];
+  renderProposals();
+  // 제안의 키워드들 검색량도 미리 채움
+  const kws = [...new Set(proposalsData.flatMap(p => p.keywords || []))].map(k => ({ keyword: k }));
+  if (kws.length) fillTrends(kws);
+}
+const BRAND_FULL = { mlb:'MLB', discovery:'Discovery', sergio:'Sergio Tacchini', duvetica:'Duvetica' };
+const CAT_KR = { tshirt:'티셔츠', outer:'아우터', pants:'팬츠', skirt:'스커트', dress:'원피스', shoes:'신발', cap:'모자', bag:'백', acc:'액세서리' };
+
+function renderProposals() {
+  const list = document.getElementById('propList');
+  const rows = (proposalsData || []).filter(p => propBrand === 'all' || p.brand === propBrand);
+  if (!rows.length) {
+    list.innerHTML = `<div class="prop-empty">
+      아직 제안이 없어요.<br>"＋ 새 제안"으로 브랜드별 트렌드 방향을 작성해보세요.</div>`;
+    return;
+  }
+  const sigById = {};
+  for (const s of all) sigById[s.id] = s;
+
+  list.innerHTML = rows.map(p => {
+    const sigs = (p.signal_ids || []).map(id => sigById[id]).filter(Boolean);
+    const sigThumbs = sigs.slice(0, 8).map(s =>
+      `<div class="prop-sig" onclick='openSheet(${JSON.stringify(esc((s.keywords||[])[0]||""))})'>${s.image_url ? `<img src="${esc(s.image_url)}" alt="">` : '🔗'}</div>`).join('');
+    const evidence = (p.keywords || []).length ? `
+      <div class="prop-evidence">
+        <div class="prop-ev-title">네이버 검색량 근거</div>
+        ${p.keywords.map(k => `
+          <div class="prop-ev-row">
+            <span class="prop-ev-kw">${esc(k)}</span>
+            <span class="prop-ev-spark spark-cell" data-kw="${esc(k)}"><span style="color:var(--text-3)">…</span></span>
+            <span class="delta-cell" data-kw="${esc(k)}"><span style="color:var(--text-3)">…</span></span>
+          </div>`).join('')}
+      </div>` : '';
+    return `<div class="prop-card">
+      <div class="prop-head">
+        <div>
+          <div class="prop-brand">${BRAND_FULL[p.brand] || esc(p.brand)}</div>
+          <div class="prop-title">${esc(p.title)}</div>
+        </div>
+        <span class="prop-cat">${CAT_KR[p.category] || esc(p.category)}</span>
+      </div>
+      ${p.direction ? `<div class="prop-dir">${esc(p.direction)}</div>` : ''}
+      ${sigThumbs ? `<div class="prop-sigs">${sigThumbs}</div>` : ''}
+      ${evidence}
+      <div class="prop-foot">
+        <span>${esc(p.author || '?')} · ${new Date(p.updated_at).toLocaleDateString('ko-KR')}</span>
+        <a href="./11_proposal_edit.html?id=${p.id}">편집 →</a>
+      </div>
+    </div>`;
+  }).join('');
+  paintTrendCells();
+}
+
+function render() {
+  applyView();
+  renderOvModes();
+  renderOvCats();
+  const top = computeTop();
+  renderHero(top);
+  renderNaver(top);
+  renderBrandRadar();
+  buildRows();
+  if (!tableRows.some(r => r.cat === curCat)) curCat = 'All';   // 월 바꿨을 때 빈 탭 방지
+  renderCatTabs();
+  renderTable();
+}
+
+(async () => {
+  await loadAll();
+  render();
+  if (location.hash === '#proposals') setView('proposals');
+  // 매칭 데이터(시장 신상 이미지·매칭수)는 뒤늦게 로드 → 완료되면 Overview 다시 렌더
+  loadMatchData().then(() => { if (curView === 'overview') rerenderOverview(); });
+})();
+</script>
+</body>
+</html>
