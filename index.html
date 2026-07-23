@@ -414,7 +414,7 @@
     <div class="row2" id="row2">
       <div class="panel">
         <div class="panel-head">
-          <h2>네이버 검색량 추이</h2>
+          <h2>네이버 검색량 추이 — Top 5</h2>
           <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
             <select id="naverRange" onchange="nvWeeks=parseInt(this.value);rerenderOverview()">
               <option value="5">최근 1개월</option>
@@ -626,7 +626,7 @@ function clusterize(signals) {
 }
 
 /* ── Overview 카테고리 필터 ── */
-const OV_MODES = { item:'아이템 시그널', lifestyle:'라이프스타일 시그널', viral:'SNS 바이럴' };
+const OV_MODES = { item:'패션 트렌드', lifestyle:'라이프스타일 트렌드', viral:'SNS 바이럴' };
 let ovMode = 'item';
 
 // 아이템 모드 카테고리 (상품 복종)
@@ -658,14 +658,19 @@ function renderOvModes() {
   };
 }
 
-/* SNS 바이럴 모드면 Overview 패널들 숨기고 바이럴 패널만 */
+/* Overview 패널 표시 제어 — Overview 뷰에서만, 그중 SNS 바이럴이면 바이럴만 */
 function applyOvMode() {
-  const isViral = (ovMode === 'viral') && curView === 'overview';
-  document.getElementById('hero').style.display = isViral ? 'none' : '';
-  document.getElementById('row2').style.display = isViral ? 'none' : '';
-  document.getElementById('latestPanel').style.display = isViral ? 'none' : '';
+  const onOverview = (curView === 'overview');
+  const isViral = onOverview && ovMode === 'viral';
+  const showOv = onOverview && !isViral;          // 히어로·차트·레이더는 Overview(비바이럴)에서만
+  document.getElementById('hero').style.display = showOv ? '' : 'none';
+  document.getElementById('row2').style.display = showOv ? '' : 'none';
+  document.getElementById('latestPanel').style.display = showOv ? '' : 'none';
   document.getElementById('viralPanel').style.display = isViral ? '' : 'none';
-  document.getElementById('ovCats').style.display = isViral ? 'none' : '';
+  // SNS 바이럴 모드에선 카테고리 탭 숨김
+  const cats = ovCatsSet();
+  document.getElementById('ovCats').style.display =
+    (isViral || Object.keys(cats).length <= 1) ? 'none' : '';
 }
 
 function renderOvCats() {
@@ -744,20 +749,19 @@ function computeTop() {
     })
     .sort((a, b) => b.heat - a.heat);
 
-  // ── 출처 다양성: 같은 기사(도메인)에서 최대 2개까지만 Top에 ──
+  // ── 출처 다양성: 같은 기사(도메인)에서 최대 3개까지만 ──
   const picked = [], srcCount = {};
   for (const c of scored) {
     const n = srcCount[c.src] || 0;
-    if (n >= 2) continue;                 // 같은 출처 3번째부터는 건너뜀
+    if (n >= 3) continue;
     picked.push(c); srcCount[c.src] = n + 1;
-    if (picked.length === 5) break;
+    if (picked.length === 10) break;
   }
-  // 다양성 제한으로 5개가 안 채워지면 남은 것으로 채움
-  if (picked.length < 5) {
+  if (picked.length < 10) {
     for (const c of scored) {
       if (picked.includes(c)) continue;
       picked.push(c);
-      if (picked.length === 5) break;
+      if (picked.length === 10) break;
     }
   }
   return picked;
@@ -835,7 +839,8 @@ function nvFetchWeeks() {
   return Math.max(nvWeeks, 9);                              // 전월 비교는 8주면 충분
 }
 
-async function renderNaver(top) {
+async function renderNaver(topAll) {
+  const top = topAll.slice(0, 5);   // 차트·변화 패널은 상위 5개만
   const status = document.getElementById('chartStatus');
   const panel = document.getElementById('topkw');
   if (!top.length) {
