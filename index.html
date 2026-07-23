@@ -792,45 +792,54 @@ function computeTop() {
     })
     .sort((a, b) => b.heat - a.heat);
 
-  // ── 묶기: ① 같은 테마 → ② 같은 기사(URL) 순 ──
-  const groups = new Map();       // groupKey → 클러스터 배열
+  // ── 묶기: 같은 카테고리 안에서만 ① 테마 → ② 같은 기사(URL) ──
+  const groups = new Map();
   const standalone = [];
   for (const c of scored) {
+    const cat = c.sigs[0]?.category || '';
     const theme = KW_THEME[String(c.keyword).toLowerCase()];
-    const key = theme ? 'T:' + theme : (c.url ? 'U:' + c.url : null);
+    // 카테고리를 키에 포함 → 아우터/슈즈가 한 카드로 섞이지 않음
+    const key = theme ? `T:${cat}:${theme}` : (c.url ? `U:${cat}:${c.url}` : null);
     if (!key) { standalone.push(c); continue; }
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(c);
   }
   const merged = [];
   for (const [key, group] of groups) {
-    const lead = group[0];                                  // 점수 최고가 대표
+    const lead = group[0];
     const isTheme = key.startsWith('T:');
-    const themeName = isTheme ? key.slice(2) : null;
-    const tags = group.slice(1).map(g => g.keyword);
+    const themeName = isTheme ? key.split(':').slice(2).join(':') : null;
     const totalCount = group.reduce((s, g) => s + g.count, 0);
     const totalMatch = group.reduce((s, g) => s + g.matchCount, 0);
-    // 테마로 묶였으면 제목을 테마명으로, 아니면 대표 키워드 그대로
+    // 여러 트렌드가 묶인 테마는 그만큼 주요 흐름 → 가산점
+    const groupBonus = (group.length - 1) * 15;
     merged.push({
       ...lead,
       title: themeName || lead.keyword,
-      tags: isTheme ? group.map(g => g.keyword) : tags,     // 테마면 전부 태그로
+      tags: isTheme ? group.map(g => g.keyword) : group.slice(1).map(g => g.keyword),
       count: totalCount, matchCount: totalMatch, grouped: group.length,
+      heat: lead.heat + groupBonus,
     });
   }
   const all2 = [...merged, ...standalone.map(c => ({ ...c, title: c.keyword }))]
     .sort((a, b) => b.heat - a.heat);
 
+  // ── 안전 필터: 선택한 카테고리와 다른 건 제외 ──
+  const catDef = ovCatsSet()[ovCat];
+  const catFiltered = (catDef && catDef.match)
+    ? all2.filter(c => catDef.match.includes(c.sigs[0]?.category))
+    : all2;
+
   // ── 출처 다양성: 같은 도메인 최대 3개 ──
   const picked = [], srcCount = {};
-  for (const c of all2) {
+  for (const c of catFiltered) {
     const n = srcCount[c.src] || 0;
     if (n >= 3) continue;
     picked.push(c); srcCount[c.src] = n + 1;
     if (picked.length === 10) break;
   }
   if (picked.length < 10) {
-    for (const c of all2) {
+    for (const c of catFiltered) {
       if (picked.includes(c)) continue;
       picked.push(c);
       if (picked.length === 10) break;
