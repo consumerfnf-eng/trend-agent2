@@ -124,6 +124,7 @@
   .hr-item { font-size:10px; padding:2px 7px; border-radius:5px; background:var(--panel-2); color:var(--text-2); border:1px solid var(--border); }
   .hr-item.up { color:var(--green); border-color:rgba(52,192,139,0.3); }
   .hr-item.down { color:var(--red); border-color:rgba(240,106,106,0.3); }
+  .hr-item.src { color:var(--text-3); background:transparent; border-style:dashed; }
 
   /* ── Panels row ── */
   .row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-top: 14px; align-items: stretch; }
@@ -363,8 +364,10 @@
       <select id="monthSelect"></select>
     </div>
 
-    <div class="ov-modes" id="ovModes"></div>
-    <div class="ov-cats" id="ovCats"></div>
+    <div id="tabsWrap">
+      <div class="ov-modes" id="ovModes"></div>
+      <div class="ov-cats" id="ovCats"></div>
+    </div>
     <div class="hero" id="hero"></div>
 
     <div class="row2" id="row2">
@@ -390,11 +393,6 @@
     </div>
 
     <div class="panel table-panel" id="researchPanel" style="display:none">
-      <div class="panel-head">
-        <h2>Research Radar</h2>
-        <span style="font-size:11px;color:var(--text-3)">런웨이·매체 기사에서 수집한 시즌 트렌드 — 팀 목격 시그널과 별도</span>
-      </div>
-      <div class="research-cats" id="researchCats"></div>
       <div class="research-grid" id="researchGrid"></div>
     </div>
 
@@ -474,11 +472,19 @@ let months = [], curMonth = null, chart = null, tableRows = [];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // 트렌드의 대표 이미지: 매칭된 시장 신상 이미지 우선, 없으면 팀 캡처
+// 대표 이미지가 로고만 나오는 신디케이트 매체 (og:image가 매체 로고)
+const BAD_THUMB_HOSTS = ['aol.com', 'yahoo.com', 'shopping.yahoo.com'];
+
 function trendImg(sig) {
   if (sig.image_url) return sig.image_url;                     // 1순위: 팀 캡처
   const kw = (sig.keywords || [])[0];
   if (kw && matchedImgByKw[kw]) return matchedImgByKw[kw];     // 2순위: 매칭된 시장 신상
-  return null;                                                 // 기사 og:image는 엉뚱해서 제외
+  // 3순위: 기사 대표 이미지 — 단, 로고만 뜨는 매체는 제외
+  if (sig.url) {
+    const host = (() => { try { return new URL(sig.url).hostname.replace(/^www\.|^m\./, ''); } catch (e) { return ''; } })();
+    if (host && !BAD_THUMB_HOSTS.some(b => host.includes(b))) return articleThumb(sig.url);
+  }
+  return null;
 }
 let matchedImgByKw = {};   // keyword → 매칭된 시장 신상 이미지 URL (Overview 로드시 채움)
 const fmtDate = iso => { const d = new Date(iso); return (d.getMonth() + 1) + '.' + d.getDate(); };
@@ -570,20 +576,21 @@ function renderOvModes() {
   document.getElementById('ovModes').onclick = e => {
     if (!e.target.dataset.m) return;
     ovMode = e.target.dataset.m; ovCat = 'all';
-    renderOvModes(); renderOvCats(); prefetchSearchAndRank();
+    renderOvModes(); renderOvCats();
+    if (curView === 'research') renderResearch(); else prefetchSearchAndRank();
   };
 }
 
 function renderOvCats() {
   const cats = ovCatsSet();
   const el = document.getElementById('ovCats');
-  // 라이프스타일은 카테고리가 전체뿐이라 탭 숨김
   el.style.display = Object.keys(cats).length <= 1 ? 'none' : '';
   el.innerHTML = Object.entries(cats)
     .map(([k, v]) => `<button data-c="${k}" class="${k === ovCat ? 'on' : ''}">${v.label}</button>`).join('');
   el.onclick = e => {
     if (!e.target.dataset.c) return;
-    ovCat = e.target.dataset.c; renderOvCats(); rerenderOverview();
+    ovCat = e.target.dataset.c; renderOvCats();
+    if (curView === 'research') renderResearch(); else rerenderOverview();
   };
 }
 
@@ -604,31 +611,57 @@ function searchDeltaOf(keyword) {
   return (v && v.length) ? deltaOf(v) : null;
 }
 
+// 기사 출처(도메인) 추출 — 다양성 확보용
+function srcOf(sig) {
+  if (!sig || !sig.url) return 'none';
+  try { return new URL(sig.url).hostname.replace(/^www\.|^m\./, ''); } catch (e) { return 'none'; }
+}
+
 function computeTop() {
   const cur = ovFilteredSignals();
   const prevCl = clusterize(ofMonth(prevMonthOf(curMonth)));
   const prevCountOf = k => { const f = prevCl.find(c => c.keyword === k); return f ? f.count : 0; };
-  return clusterize(cur)
+
+  const scored = clusterize(cur)
     .map(c => {
       const p = prevCountOf(c.keyword);
-      // 매칭된 시장 신상 수
       let matchCount = 0;
       for (const s of c.sigs) matchCount += (matchCountByTrend[s.id] || 0);
-      // 네이버 검색량 증감 (첫 키워드 기준)
       const kw = (c.sigs[0]?.keywords || [])[0];
       const delta = kw ? searchDeltaOf(kw) : null;
 
       // ── 종합 점수 ──
-      //  검색량 증감(+면 가산, 최대 60) + 팀 목격(건당 8) + 매칭 시장신상(건당 10)
-      const searchScore = delta === null ? 0 : Math.max(-20, Math.min(60, delta * 0.4));
-      const teamScore = c.count * 8;
-      const matchScore = matchCount * 10;
+      // 검색량: 상승은 크게 가산(최대 +70), 하락은 확실히 감점(최대 -40)
+      let searchScore = 0;
+      if (delta !== null) {
+        searchScore = delta >= 0 ? Math.min(70, delta * 0.6) : Math.max(-40, delta * 0.8);
+      }
+      const teamScore = c.count * 8;          // 팀 목격
+      const matchScore = matchCount * 12;     // 매칭된 시장 신상 (시장 반응)
       const heat = Math.round(searchScore + teamScore + matchScore);
 
-      return { ...c, matchCount, delta, heat, stage: p === 0 ? 'new' : (c.count > p ? 'rising' : 'steady') };
+      return { ...c, matchCount, delta, heat, src: srcOf(c.sigs[0]),
+               stage: p === 0 ? 'new' : (c.count > p ? 'rising' : 'steady') };
     })
-    .sort((a, b) => b.heat - a.heat)
-    .slice(0, 5);
+    .sort((a, b) => b.heat - a.heat);
+
+  // ── 출처 다양성: 같은 기사(도메인)에서 최대 2개까지만 Top에 ──
+  const picked = [], srcCount = {};
+  for (const c of scored) {
+    const n = srcCount[c.src] || 0;
+    if (n >= 2) continue;                 // 같은 출처 3번째부터는 건너뜀
+    picked.push(c); srcCount[c.src] = n + 1;
+    if (picked.length === 5) break;
+  }
+  // 다양성 제한으로 5개가 안 채워지면 남은 것으로 채움
+  if (picked.length < 5) {
+    for (const c of scored) {
+      if (picked.includes(c)) continue;
+      picked.push(c);
+      if (picked.length === 5) break;
+    }
+  }
+  return picked;
 }
 
 /* 카테고리 탭 변경 시 Overview만 다시 그림 */
@@ -663,6 +696,7 @@ function renderHero(top) {
         if (c.delta !== null && c.delta !== undefined) reasons.push(`<span class="hr-item ${c.delta >= 0 ? 'up' : 'down'}">검색 ${c.delta >= 0 ? '▲' : '▼'}${Math.abs(c.delta)}%</span>`);
         if (c.count > 0) reasons.push(`<span class="hr-item">목격 ${c.count}</span>`);
         if (c.matchCount > 0) reasons.push(`<span class="hr-item">매칭 ${c.matchCount}</span>`);
+        if (c.src && c.src !== 'none') reasons.push(`<span class="hr-item src">${esc(c.src.split('.')[0])}</span>`);
         const reasonHtml = reasons.length ? `<div class="h-reason">${reasons.join('')}</div>` : '';
         return `<div class="hcard" onclick='openSheet(${JSON.stringify(esc(c.keyword))})'>
           <span class="h-rank">${i + 1}</span>
@@ -968,6 +1002,8 @@ function applyView() {
   ['hero','row2','latestPanel'].forEach(id => document.getElementById(id).style.display = v === 'overview' ? '' : 'none');
   document.getElementById('ovCats').style.display = v === 'overview' ? '' : 'none';
   document.getElementById('researchPanel').style.display = v === 'research' ? '' : 'none';
+  // 아이템/라이프스타일 + 카테고리 탭은 Overview·Research에서만
+  document.getElementById('tabsWrap').style.display = (v === 'overview' || v === 'research') ? '' : 'none';
   document.getElementById('matchingPanel').style.display = v === 'matching' ? '' : 'none';
   document.getElementById('proposalsPanel').style.display = v === 'proposals' ? '' : 'none';
   document.getElementById('keywordsPanel').style.display = v === 'keywords' ? '' : 'none';
@@ -1300,10 +1336,6 @@ window.toggleMMatch = async (pid) => {
 };
 
 /* ── Research Radar ── */
-const RESEARCH_CATS = { all:'전체', silhouette:'실루엣', color:'컬러', fabric:'소재·디테일', detail:'소재·디테일', shoes:'슈즈', movement:'무브먼트' };
-const R_CAT_GROUPS = { all:null, silhouette:['silhouette'], color:['color'], 'fabric':['fabric','detail'], shoes:null, movement:['movement'] };
-let researchCat = 'all';
-
 function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
 // 무료 스크린샷/메타이미지 프록시로 기사 대표 이미지 추정
 function articleThumb(url) {
@@ -1311,31 +1343,16 @@ function articleThumb(url) {
   return 'https://api.microlink.io/?url=' + encodeURIComponent(url) + '&screenshot=false&meta=true&embed=image.url';
 }
 
-function renderResearchCats() {
-  const uniq = {};
-  Object.entries(RESEARCH_CATS).forEach(([k, v]) => { uniq[v] = uniq[v] || k; });
-  const seen = new Set();
-  const buttons = Object.entries(RESEARCH_CATS).filter(([k, v]) => { if (seen.has(v)) return false; seen.add(v); return true; });
-  document.getElementById('researchCats').innerHTML = buttons
-    .map(([k, v]) => `<button data-c="${k}" class="${k === researchCat ? 'on' : ''}">${v}</button>`).join('');
-  document.getElementById('researchCats').onclick = e => {
-    if (!e.target.dataset.c) return;
-    researchCat = e.target.dataset.c; renderResearchCats(); renderResearch();
-  };
-}
-
 function renderResearch() {
-  renderResearchCats();
+  // 상단 탭(아이템/라이프스타일 + 카테고리)으로 필터 — 별도 탭 없음
   let items = all.filter(s => s.source_type === 'research');
-  if (researchCat === 'shoes') items = items.filter(s => s.category === 'shoes');
-  else if (researchCat !== 'all') {
-    const axes = R_CAT_GROUPS[researchCat] || [researchCat];
-    items = items.filter(s => axes.includes(s.axis));
-  }
+  items = items.filter(s => ovMode === 'lifestyle' ? s.signal_type === 'lifestyle' : s.signal_type !== 'lifestyle');
+  const cat = ovCatsSet()[ovCat];
+  if (cat && cat.match) items = items.filter(s => cat.match.includes(s.category));
   items = items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const grid = document.getElementById('researchGrid');
-  if (!items.length) { grid.innerHTML = '<div class="tbl-empty" style="grid-column:1/-1">해당 리서치 트렌드가 없어요</div>'; return; }
+  if (!items.length) { grid.innerHTML = '<div class="tbl-empty" style="grid-column:1/-1">해당 카테고리 트렌드가 없어요</div>'; return; }
 
   grid.innerHTML = items.map(s => {
     const kw = (s.keywords || [])[0] || '';
