@@ -275,6 +275,7 @@
   .m-prod-body { padding:7px 8px 8px; }
   .m-prod-name { font-size:11px; font-weight:600; line-height:1.35; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .m-prod-meta { font-size:10px; color:var(--text-3); margin-top:3px; }
+  .m-prod-why { font-size:10px; color:var(--amber); margin-top:4px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .m-prod-check { position:absolute; top:6px; right:6px; width:19px; height:19px; border-radius:50%; background:var(--green); color:#fff; font-size:11px; display:none; align-items:center; justify-content:center; }
   .m-prod.matched .m-prod-check { display:flex; }
   .m-prod-tag { position:absolute; top:6px; left:6px; font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(240,168,92,0.92); color:#3a2510; font-weight:600; max-width:80%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
@@ -1288,33 +1289,92 @@ const MCAT_KR = { outer:'아우터', outerwear:'아우터', top:'상의', pants:
 // 트렌드 키워드별 매칭 힌트: 상품명에 실제 나올 브랜드·모델·단어
 // (시장 상품명이 "살로몬 XT-6 스카이라인..." 형태라 영문 키워드론 안 걸림)
 const MATCH_HINTS = {
-  'low profile sneaker': ['스피드캣','speedcat','타키온','로우','푸마','puma','오니츠카','onitsuka','삼바','samba','가젤','gazelle','스니커'],
-  'retro runner': ['뉴발란스','new balance','아식스','asics','gel','카르후','karhu','993','990','1130','써코니','saucony','2002'],
-  'trail sneaker': ['살로몬','salomon','xt-6','xt6','스피드크로스','speedcross','호카','hoka','메렐','merrell','고어텍스','gore','acs','트레일'],
-  'gorpcore': ['살로몬','salomon','호카','hoka','고어텍스','gore','아크테릭스','trail','트레일','고프','고프코어'],
-  'ballet sneaker': ['발레','ballet','메리제인','플랫','미우미우','miu miu'],
-  'sneaker charm': ['참','charm','키링','비즈'],
-  'mixed media': ['패치','믹스','콤비','레오파드','스플릿'],
-  'bold colorway': ['옐로우','yellow','레드','블루','그린','핑크','오렌지','원색'],
-  'butter yellow': ['버터','butter','옐로우','yellow','레몬'],
-  'fringe': ['프린지','fringe','태슬','tassel'],
-  'suede': ['스웨이드','suede','누벅'],
-  'metallic logo': ['메탈','metal','실버','골드','메탈릭'],
-  'noisy neutrals': ['뉴트럴','베이지','그레이','크림','오트밀','샌드','토프'],
-  'matching set': ['셋업','세트','set','투피스'],
-  'skinny fit': ['스키니','skinny','슬림','slim'],
-  'barrel leg': ['배럴','barrel','와이드','wide','벌룬','벌른'],
-  'wide fit': ['와이드','wide','벌룬','배기','baggy'],
-  'flip flop': ['쪼리','플립','flip','슬리퍼','슬라이드'],
-  'heat dressing': ['린넨','메시','시어서커','서머'],
-  'retro surf': ['서프','surf','보드','하와이안','트로피컬'],
-  'turquoise': ['터쿼이즈','turquoise','민트','청록'],
-  'sheer fabric': ['시스루','쉬어','sheer','시폰'],
-  'ruffle': ['러플','ruffle','프릴'],
-  'texture': ['텍스처','부클레','자카드','케이블'],
-  'running crew': ['러닝','running','런','조깅'],
-  'drop waist': ['드롭웨이스트','드롭'],
-  'cutout': ['컷아웃','cutout','오픈'],
+  // ── 슈즈 ──
+  'low profile sneaker': ['스피드캣','speedcat','타키온','로우','푸마','puma','오니츠카','onitsuka','삼바','samba','가젤','gazelle','슬림','로우탑'],
+  'retro runner': ['뉴발란스','new balance','아식스','asics','gel','카르후','karhu','993','990','1130','써코니','saucony','2002','레트로'],
+  'trail sneaker': ['살로몬','salomon','xt-6','xt6','스피드크로스','speedcross','호카','hoka','메렐','merrell','고어텍스','gore','acs','트레일','trail'],
+  'gorpcore': ['살로몬','salomon','호카','hoka','고어텍스','gore','아크테릭스','arc','트레일','고프','아웃도어'],
+  'ballet sneaker': ['발레','ballet','메리제인','mary jane','플랫','flat','미우미우','miu miu','발렛'],
+  'sneaker charm': ['참','charm','키링','비즈','참스'],
+  'jelly shoes': ['젤리','jelly','멜리사','melissa','락피쉬','rockfish','헤븐리','투명','pvc','러버','rubber'],
+  'jelly flip flop': ['젤리','jelly','쪼리','플립','flip','슬리퍼','슬라이드','샌들','sandal'],
+  'mary jane jelly': ['메리제인','mary jane','젤리','jelly','스피드캣','발렛','ballet','스트랩','strap'],
+  'flip flop': ['쪼리','플립','flip','슬리퍼','슬라이드','샌들','sandal','통','토포스트'],
+  'balletcore': ['발레','ballet','메리제인','mary jane','플랫','리본','ribbon','레이스','새틴'],
+
+  // ── 하의 ──
+  'barrel leg': ['배럴','barrel','벌룬','balloon','와이드','wide','커브','curve'],
+  'barrel jean': ['배럴','barrel','벌룬','와이드','데님','denim','진','jean'],
+  'wide fit': ['와이드','wide','벌룬','배기','baggy','루즈','loose'],
+  'skinny fit': ['스키니','skinny','슬림','slim','타이트','tight'],
+  'ripped jeans': ['디스트로이드','디스트로이','찢','ripped','damage','데미지','빈티지 워싱'],
+  'low rise': ['로우라이즈','로우','low rise','골반'],
+  'mountain utility': ['하이킹','hiking','등산','유틸리티','utility','카고','cargo','트레킹'],
+
+  // ── 상의·아우터 ──
+  'quarter zip': ['쿼터집','quarter','하프집','half zip','집업','zip','넥집'],
+  'vintage knit': ['니트','knit','케이블','cable','스웨터','sweater','카디건','cardigan','베스트','vest'],
+  'dandy knit': ['니트','knit','베스트','vest','스웨터','sweater','페어아일','v넥','브이넥'],
+  'check pattern': ['체크','check','플래드','plaid','헤링본','herringbone','타탄','글렌'],
+  'military look': ['밀리터리','military','카고','cargo','필드','field','유틸','나폴레옹'],
+  'oversized suit': ['오버','over','수트','suit','블레이저','blazer','자켓','재킷'],
+  'linen tailoring': ['린넨','linen','마','수트','suit','블레이저','blazer','셋업'],
+  'weatherproof outer': ['바람막이','윈드','wind','레인','rain','트렌치','trench','방수','고어텍스','아노락'],
+  'cropped trench': ['트렌치','trench','크롭','crop','숏','short'],
+  'marching band jacket': ['밴드','band','밀리터리','military','골드','브레이드','더블'],
+  'granola core': ['플리스','fleece','코위찬','뉴트럴','베이지','브라운','올리브','아웃도어'],
+
+  // ── 소재·디테일 ──
+  'corduroy velvet': ['코듀로이','corduroy','골덴','벨벳','velvet','벨루어'],
+  'fringe': ['프린지','fringe','태슬','tassel','술'],
+  'suede': ['스웨이드','suede','누벅','nubuck'],
+  'texture': ['텍스처','부클레','boucle','자카드','jacquard','케이블','러플','와플'],
+  'ruffle': ['러플','ruffle','프릴','frill','플리츠','셔링'],
+  'futuristic material': ['pvc','러버','rubber','메탈릭','metallic','글리터','시스루','비닐'],
+  'jazzy jacquard': ['자카드','jacquard','브로케이드','패턴','페이즐리'],
+  'silk scarf': ['스카프','scarf','실크','silk','머플러','반다나'],
+  'small fashion': ['벨트','belt','스카프','scarf','리본','ribbon','키링','참'],
+  'sheer fabric': ['시스루','쉬어','sheer','시폰','메시','mesh','오간자'],
+
+  // ── 패턴·컬러 (color 컬럼도 함께 검사) ──
+  'bold colorway': ['옐로우','yellow','레드','red','블루','blue','그린','green','핑크','pink','오렌지','비비드'],
+  'color blocking': ['블록','block','배색','컬러블록','투톤'],
+  'color liberation': ['옐로우','레드','블루','그린','핑크','퍼플','비비드','원색'],
+  'klein blue': ['블루','blue','코발트','cobalt','일렉트릭','네이비'],
+  'transformative teal': ['틸','teal','청록','민트','터쿼이즈','블루그린'],
+  'cloud dancer': ['화이트','white','아이보리','ivory','크림','cream','오프화이트'],
+  'spiced red': ['레드','red','버건디','burgundy','보르도','와인','체리'],
+  'pop of red': ['레드','red','버건디','체리','스칼렛'],
+  'chocolate brown': ['브라운','brown','초콜릿','chocolate','모카','카멜','에스프레소'],
+  'moss green': ['그린','green','올리브','olive','카키','khaki','모스','세이지'],
+  'dark florals': ['플로럴','floral','꽃','플라워','flower','보태니컬'],
+  'animal print': ['레오파드','leopard','호피','지브라','zebra','애니멀','뱀피','파이톤'],
+  'camo': ['카모','camo','카무플라주','밀리터리','위장'],
+  'horse motif': ['말','horse','호스','기마','승마'],
+
+  // ── 스타일·무드 ──
+  'modern academia': ['프레피','preppy','아카데미','옥스포드','가디건','베스트','트위드'],
+  'poet core': ['빈티지','vintage','코듀로이','셔츠','shirt','니트','메신저'],
+  'matching set': ['셋업','세트','set','투피스','앙상블','상하'],
+  'loud luxury': ['맥시멀','볼드','시퀸','sequin','페더','feather','레더'],
+  'retro surf': ['서프','surf','보드','board','하와이안','트로피컬','비치'],
+  'heat dressing': ['린넨','linen','메시','mesh','시어서커','쿨','cool','서머','summer','냉감'],
+  'hybrid weather shoes': ['젤리','jelly','레인','rain','방수','러버','rubber','아쿠아'],
+  'uniform dressing': ['베이직','basic','에센셜','essential','데일리'],
+};
+
+// 컬러 트렌드는 상품 color 컬럼과 직접 대조
+const COLOR_TRENDS = {
+  'klein blue': ['블루','blue','코발트','네이비','navy'],
+  'transformative teal': ['틸','teal','민트','mint','청록','터쿼이즈'],
+  'cloud dancer': ['화이트','white','아이보리','ivory','크림','cream'],
+  'spiced red': ['레드','red','버건디','burgundy','와인','wine','체리'],
+  'pop of red': ['레드','red','버건디','스칼렛'],
+  'chocolate brown': ['브라운','brown','초콜릿','모카','카멜','camel'],
+  'moss green': ['그린','green','올리브','olive','카키','khaki'],
+  'butter yellow': ['옐로우','yellow','버터','butter','레몬'],
+  'noisy neutrals': ['베이지','beige','그레이','gray','grey','크림','오트밀','샌드','토프','뉴트럴'],
+  'bold colorway': ['옐로우','yellow','레드','red','블루','blue','그린','green','핑크','pink','오렌지','orange'],
 };
 
 let mProducts = [], mMatches = [], mActiveTrend = null, mSeasonFilter = 3, mLoaded = false, mShowAllCat = false;
@@ -1420,26 +1480,40 @@ async function mKr(kw) {
 }
 function mProdScore(trend, p, krMap) {
   const catOK = mCatMatch(trend.category, p.category);
-  // 트렌드에 카테고리가 있으면 카테고리 안 맞는 상품은 제외 (오매칭 방지)
-  if (trend.category && trend.category !== 'etc' && !catOK) return 0;
+  if (trend.category && trend.category !== 'etc' && !catOK) return { score: 0, why: '' };
 
   let score = 0;
+  const why = [];
+  const color = (p.color || '').toLowerCase();
   const hay = (p.name + ' ' + p.color + ' ' + p.category + ' ' + p.brand).toLowerCase();
+
   for (const k of (trend.keywords || [])) {
     if (!k) continue;
-    if (hay.includes(k.toLowerCase())) score += 40;
+    const kl = k.toLowerCase();
+
+    // 1) 영문 키워드가 상품 정보에 직접
+    if (hay.includes(kl)) { score += 45; why.push(k); }
+
+    // 2) 한글 매핑어가 상품명·컬러에
     const kr = krMap[k];
-    if (kr && (p.name + ' ' + p.color).includes(kr)) score += 40;
-    if (kr) { const frag = kr.replace(/\s/g, ''); if (frag.length >= 2 && (p.name).replace(/\s/g,'').includes(frag)) score += 25; }
-    const hints = MATCH_HINTS[k.toLowerCase()];
+    if (kr && (p.name + ' ' + p.color).includes(kr)) { score += 45; why.push(kr); }
+
+    // 3) 컬러 트렌드는 color 컬럼과 직접 대조
+    const colorWords = COLOR_TRENDS[kl];
+    if (colorWords && color) {
+      const hit = colorWords.find(cw => color.includes(cw.toLowerCase()));
+      if (hit) { score += 50; why.push('컬러 ' + hit); }
+    }
+
+    // 4) 힌트 단어 (브랜드·모델·소재)
+    const hints = MATCH_HINTS[kl];
     if (hints) {
-      for (const h of hints) {
-        if (hay.includes(h.toLowerCase())) { score += 35; break; }
-      }
+      const hit = hints.find(h => hay.includes(h.toLowerCase()));
+      if (hit) { score += 35; why.push(hit); }
     }
   }
-  if (catOK) score += 20;
-  return score;
+  if (catOK) score += 15;
+  return { score, why: [...new Set(why)].slice(0, 3).join(' · ') };
 }
 
 const M_CATS = {
@@ -1509,17 +1583,18 @@ async function renderMMatchPanel() {
   if (mBrandFilter !== 'all') sameCat = sameCat.filter(p => p.brand === mBrandFilter);
 
   // 힌트/키워드로 점수 매겨 정렬
-  const scored = sameCat.map(p => ({ p, score: mProdScore(t, p, krMap) }));
+  const scored = sameCat.map(p => { const r = mProdScore(t, p, krMap); return { p, score: r.score, why: r.why }; });
   const hits = scored.filter(c => c.score > 20).sort((a, b) => b.score - a.score);
   const catOnly = scored.filter(c => c.score <= 20).sort((a, b) => b.p.seasonNum - a.p.seasonNum);
 
   const cands = (mShowAllCat ? [...hits, ...catOnly] : hits).slice(0, mShowAllCat ? 60 : 12);
 
-  const card = (p, m) => `<div class="m-prod ${m ? 'matched' : ''}" onclick="toggleMMatch('${p._id}')">
+  const card = (p, m, why) => `<div class="m-prod ${m ? 'matched' : ''}" onclick="toggleMMatch('${p._id}')">
     <div class="m-prod-check">✓</div>${p.brand ? `<span class="m-prod-tag" style="${p.isTeam ? 'background:rgba(139,124,246,0.92);color:#fff' : ''}">${p.isTeam ? '팀 · ' : ''}${esc(p.brand)}</span>` : ''}
     <div class="m-prod-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '◇'}</div>
     <div class="m-prod-body"><div class="m-prod-name">${esc(p.name || '상품')}</div>
-    <div class="m-prod-meta">${p.segment ? esc(p.segment) + ' · ' : ''}${esc(p.season || '')}</div></div></div>`;
+    <div class="m-prod-meta">${p.segment ? esc(p.segment) + ' · ' : ''}${esc(p.season || '')}</div>
+    ${why ? `<div class="m-prod-why">${esc(why)}</div>` : ''}</div></div>`;
 
   const seasonOpts = [{v:3,t:'최근 3개월'},{v:6,t:'최근 6개월'},{v:12,t:'최근 1년'},{v:0,t:'전체 시즌'}]
     .map(o => `<option value="${o.v}" ${o.v === mSeasonFilter ? 'selected' : ''}>${o.t}</option>`).join('');
@@ -1545,7 +1620,7 @@ async function renderMMatchPanel() {
       <button onclick="mShowAllCat=!mShowAllCat;renderMMatchPanel()" style="margin-left:auto;font-family:inherit;font-size:11px;color:var(--violet);background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;cursor:pointer">
         ${mShowAllCat ? '추천만' : '전체 보기'}</button>
     </div>
-    ${cands.length ? `<div class="m-grid">${cands.map(c => card(c.p, false)).join('')}</div>`
+    ${cands.length ? `<div class="m-grid">${cands.map(c => card(c.p, false, c.why)).join('')}</div>`
       : `<div class="m-empty-hint">이 조건에 맞는 신상이 없어요.<br>세그먼트·브랜드·시즌을 바꿔보세요.</div>`}
     <a class="m-propose ${matched.length ? '' : 'disabled'}" href="./11_proposal_edit.html?trend=${encodeURIComponent(kw)}&trendId=${t.id}&cat=${encodeURIComponent(t.category||'')}">이 매칭으로 브랜드 제안 만들기 →</a>`;
 }
