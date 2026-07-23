@@ -744,6 +744,26 @@ function srcOf(sig) {
   try { return new URL(sig.url).hostname.replace(/^www\.|^m\./, ''); } catch (e) { return 'none'; }
 }
 
+// ── 주제 그룹: 같은 테마의 트렌드를 하나로 묶음 ──
+const THEME_GROUPS = {
+  '사우나·리커버리': ['social sauna','recovery economy','jjimjilbang revival'],
+  '등산': ['hiking boom','hiking style'],
+  '러닝': ['running boom','run club'],
+  '디지털 디톡스': ['digital declutter','analog maximalism','nature proximity'],
+  '젤리슈즈': ['jelly shoes','jelly flip flop','mary jane jelly'],
+  '스니커': ['low profile sneaker','retro runner','trail sneaker','ballet sneaker','sneaker charm'],
+  '배럴·와이드': ['barrel leg','barrel jean','wide fit'],
+  '볼드 컬러': ['bold colorway','klein blue','color liberation','color blocking','spiced red','pop of red'],
+  '뉴트로': ['2010s revival','1980s revival','ripped jeans','skinny fit'],
+  '아카데미아': ['modern academia','poet core','check pattern','vintage knit','dandy knit'],
+  '아웃도어': ['gorpcore','mountain utility','weatherproof outer','granola core','camo'],
+  '프린지·텍스처': ['fringe','texture','ruffle','suede'],
+  '발레·페미닌': ['balletcore','coquette'],
+};
+// 키워드 → 테마명 역인덱스
+const KW_THEME = {};
+for (const [theme, kws] of Object.entries(THEME_GROUPS)) for (const k of kws) KW_THEME[k] = theme;
+
 function computeTop() {
   const cur = ovFilteredSignals();
   const prevCl = clusterize(ofMonth(prevMonthOf(curMonth)));
@@ -771,24 +791,34 @@ function computeTop() {
     })
     .sort((a, b) => b.heat - a.heat);
 
-  // ── 같은 기사(URL)에서 나온 트렌드는 하나로 묶고, 나머지는 해시태그로 ──
-  const byArticle = new Map();
+  // ── 묶기: ① 같은 테마 → ② 같은 기사(URL) 순 ──
+  const groups = new Map();       // groupKey → 클러스터 배열
   const standalone = [];
   for (const c of scored) {
-    if (!c.url) { standalone.push(c); continue; }
-    if (!byArticle.has(c.url)) byArticle.set(c.url, []);
-    byArticle.get(c.url).push(c);
+    const theme = KW_THEME[String(c.keyword).toLowerCase()];
+    const key = theme ? 'T:' + theme : (c.url ? 'U:' + c.url : null);
+    if (!key) { standalone.push(c); continue; }
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(c);
   }
   const merged = [];
-  for (const [, group] of byArticle) {
-    const lead = group[0];                                  // 점수 가장 높은 것이 대표
-    const tags = group.slice(1).map(g => g.keyword);        // 나머지는 해시태그
-    // 묶인 시그널 수·매칭 수도 합산
+  for (const [key, group] of groups) {
+    const lead = group[0];                                  // 점수 최고가 대표
+    const isTheme = key.startsWith('T:');
+    const themeName = isTheme ? key.slice(2) : null;
+    const tags = group.slice(1).map(g => g.keyword);
     const totalCount = group.reduce((s, g) => s + g.count, 0);
     const totalMatch = group.reduce((s, g) => s + g.matchCount, 0);
-    merged.push({ ...lead, tags, count: totalCount, matchCount: totalMatch, grouped: group.length });
+    // 테마로 묶였으면 제목을 테마명으로, 아니면 대표 키워드 그대로
+    merged.push({
+      ...lead,
+      title: themeName || lead.keyword,
+      tags: isTheme ? group.map(g => g.keyword) : tags,     // 테마면 전부 태그로
+      count: totalCount, matchCount: totalMatch, grouped: group.length,
+    });
   }
-  const all2 = [...merged, ...standalone].sort((a, b) => b.heat - a.heat);
+  const all2 = [...merged, ...standalone.map(c => ({ ...c, title: c.keyword }))]
+    .sort((a, b) => b.heat - a.heat);
 
   // ── 출처 다양성: 같은 도메인 최대 3개 ──
   const picked = [], srcCount = {};
@@ -842,14 +872,14 @@ function renderHero(top) {
         if (c.matchCount > 0) reasons.push(`<span class="hr-item">매칭 ${c.matchCount}</span>`);
         if (c.src && c.src !== 'none') reasons.push(`<span class="hr-item src">${esc(c.src.split('.')[0])}</span>`);
         const reasonHtml = reasons.length ? `<div class="h-reason">${reasons.join('')}</div>` : '';
-        return `<div class="hcard" onclick='openSheet(${JSON.stringify(esc(c.keyword))})'>
+        return `<div class="hcard" onclick='openSheet(${JSON.stringify(esc(c.keyword))}, ${JSON.stringify(c.tags || [])}, ${JSON.stringify(esc(c.title || c.keyword))})'>
           <span class="h-rank">${i + 1}</span>
           <span class="h-stage ${c.stage}">${STAGE[c.stage]}</span>
           <div class="h-img">${img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='◇'">` : '◇'}</div>
           <div class="h-body">
-            <div class="h-kw">${esc(c.keyword)}</div>
-            <div class="h-cat">${catLabel(c.sigs[0])}</div>
-            ${(c.tags && c.tags.length) ? `<div class="h-tags">${c.tags.slice(0, 4).map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
+            <div class="h-kw">${esc(c.title || c.keyword)}</div>
+            <div class="h-cat">${c.grouped > 1 ? `트렌드 ${c.grouped}건` : catLabel(c.sigs[0])}</div>
+            ${(c.tags && c.tags.length) ? `<div class="h-tags">${c.tags.slice(0, 5).map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
             ${reasonHtml}
           </div>
         </div>`;
@@ -1129,11 +1159,13 @@ document.getElementById('periodSelect').addEventListener('change', e => {
 });
 
 /* ── 상세 시트 ── */
-window.openSheet = function (keyword) {
-  const sigs = all.filter(s => (s.keywords || []).includes(keyword))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
-  document.getElementById('sheetTitle').textContent = keyword;
-  document.getElementById('sheetSub').textContent = sigs.length + '건 수집 · 전체 기간';
+window.openSheet = function (keyword, extraKws, title) {
+  const kws = [keyword, ...(extraKws || [])];
+  const sigs = all.filter(s => (s.keywords || []).some(k => kws.includes(k)))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 30);
+  document.getElementById('sheetTitle').textContent = title || keyword;
+  document.getElementById('sheetSub').textContent =
+    sigs.length + '건 수집' + (kws.length > 1 ? ` · ${kws.length}개 트렌드 묶음` : '');
   document.getElementById('sheetBody').innerHTML = sigs.map(s => `
     <div class="sig-row">
       <div class="simg">${s.image_url ? `<a href="${esc(s.image_url)}" target="_blank" rel="noopener"><img src="${esc(s.image_url)}" alt="" loading="lazy"></a>` : '🔗'}</div>
