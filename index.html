@@ -594,8 +594,20 @@ function renderOvCats() {
   };
 }
 
+// 선택한 달 기준 최근 6개월 (트렌드는 월 단위가 아니라 시즌 단위라 롤링 윈도우)
+function recentMonths(month, n) {
+  const out = [];
+  let [y, m] = month.split('-').map(Number);
+  for (let i = 0; i < n; i++) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`);
+    m--; if (m === 0) { m = 12; y--; }
+  }
+  return out;
+}
+
 function ovFilteredSignals() {
-  const base = ofMonth(curMonth);
+  const months = new Set(recentMonths(curMonth, 12));
+  const base = all.filter(s => months.has(s.month_bucket));
   // 모드로 먼저 가름: 아이템(product) vs 라이프스타일
   const byMode = base.filter(s => ovMode === 'lifestyle' ? s.signal_type === 'lifestyle' : s.signal_type !== 'lifestyle');
   const cat = ovCatsSet()[ovCat];
@@ -1015,7 +1027,7 @@ function applyView() {
   document.getElementById('navKeywords').classList.toggle('on', v === 'keywords');
 
   const titles = {
-    overview: [monthLabel(curMonth) + ' 트렌드 시그널', '키워드 발굴은 팀 시그널 · 검증은 네이버 검색량 지수'],
+    overview: [monthLabel(curMonth) + ' 트렌드 시그널', '최근 1년 시그널 종합 · 순위는 검색량 증감 + 팀 목격 + 시장 매칭'],
     research: ['시즌 트렌드 리서치', '런웨이·매체 기사에서 수집한 SS/FW 트렌드 — 근거 기사 링크 포함'],
     matching: ['트렌드 · 시장 신상 매칭', '트렌드를 고르면 그 트렌드로 나온 시장 신상(경쟁사)을 찾아줍니다'],
     proposals: ['브랜드별 트렌드 제안', '팀이 직접 큐레이션한 상품기획 방향 — 근거는 시그널과 네이버 검색량'],
