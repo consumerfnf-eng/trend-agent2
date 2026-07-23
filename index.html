@@ -261,6 +261,32 @@
   .m-propose { display:block; width:100%; text-align:center; margin-top:16px; padding:11px; background:linear-gradient(135deg,var(--violet),var(--blue)); border-radius:9px; color:#fff; font-weight:600; font-size:13px; }
   .m-propose.disabled { opacity:.4; pointer-events:none; }
 
+  /* ── SNS Viral ── */
+  .viral-status { font-size:12px; color:var(--text-3); margin-bottom:14px; }
+  .viral-status b { color:var(--green); }
+  .viral-status.err b { color:var(--red); }
+  .viral-filters { margin-bottom:16px; }
+  .viral-row2 { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .viral-row2 select { font-family:inherit; font-size:12px; color:var(--text); background:var(--panel-2);
+    border:1px solid var(--border); border-radius:7px; padding:7px 11px; cursor:pointer; }
+  .viral-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+  .v-card { background:var(--panel-2); border:1px solid var(--border); border-radius:11px; padding:14px;
+    display:flex; flex-direction:column; gap:9px; transition:border-color .12s; border-left:3px solid var(--violet); }
+  .v-card:hover { border-color:#3A3B42; }
+  .v-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .v-rank { font-size:11px; font-weight:700; color:var(--violet); background:rgba(139,124,246,0.14); border-radius:5px; padding:2px 7px; flex-shrink:0; }
+  .v-brand { font-size:13px; font-weight:600; }
+  .v-prod { font-size:11px; color:var(--text-2); margin-top:2px; line-height:1.45; }
+  .v-ad { font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(240,168,92,0.18); color:var(--amber); flex-shrink:0; }
+  .v-content { font-size:12px; color:var(--text-2); line-height:1.55;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .v-acct { font-size:11px; color:var(--text-3); }
+  .v-stats { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; padding-top:9px; border-top:1px solid var(--border); }
+  .v-stat b { color:var(--text); font-weight:600; }
+  .v-stat span { color:var(--text-3); }
+  .v-link { font-size:11px; color:var(--blue); text-decoration:underline; }
+  .v-cat { font-size:10px; color:var(--text-3); border:1px solid var(--border); padding:2px 7px; border-radius:20px; }
+
   /* ── Table ── */
   .table-panel { margin-top: 14px; }
   .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -345,6 +371,7 @@
       <a href="#" data-view="overview" class="on" id="navOverview"><span class="ico">◧</span> Overview</a>
       <a href="#" data-view="research" id="navResearch"><span class="ico">◎</span> Research</a>
       <a href="#" data-view="matching" id="navMatching"><span class="ico">⇄</span> Matching</a>
+      <a href="#" data-view="viral" id="navViral"><span class="ico">▲</span> SNS Viral</a>
       <a href="#" data-view="proposals" id="navProposals"><span class="ico">✎</span> Proposals</a>
       <a href="#" data-view="keywords" id="navKeywords"><span class="ico">☰</span> Keywords</a>
       <a href="./02_signal_box.html" target="_blank"><span class="ico">＋</span> Signal Box</a>
@@ -409,6 +436,28 @@
           <div class="m-panel" id="mMatchPanel"><div class="mp-empty2">← 트렌드를 선택하세요</div></div>
         </div>
       </div>
+    </div>
+
+    <div class="panel table-panel" id="viralPanel" style="display:none">
+      <div class="viral-status" id="viralStatus">SNS 바이럴 데이터 불러오는 중…</div>
+      <div class="viral-filters">
+        <div class="cat-tabs" id="viralCats"></div>
+        <div class="viral-row2">
+          <select id="viralBrand" onchange="vBrand=this.value;renderViral()"></select>
+          <select id="viralAd" onchange="vAd=this.value;renderViral()">
+            <option value="all">전체 (광고+오가닉)</option>
+            <option value="ad">광고·협찬만</option>
+            <option value="organic">오가닉만</option>
+          </select>
+          <select id="viralSort" onchange="vSort=this.value;renderViral()">
+            <option value="score">스코어순</option>
+            <option value="views">조회수순</option>
+            <option value="likes">좋아요순</option>
+            <option value="comments">댓글순</option>
+          </select>
+        </div>
+      </div>
+      <div class="viral-grid" id="viralGrid"></div>
     </div>
 
     <div class="panel table-panel" id="proposalsPanel" style="display:none">
@@ -1017,12 +1066,14 @@ function applyView() {
   // 아이템/라이프스타일 + 카테고리 탭은 Overview·Research에서만
   document.getElementById('tabsWrap').style.display = (v === 'overview' || v === 'research') ? '' : 'none';
   document.getElementById('matchingPanel').style.display = v === 'matching' ? '' : 'none';
+  document.getElementById('viralPanel').style.display = v === 'viral' ? '' : 'none';
   document.getElementById('proposalsPanel').style.display = v === 'proposals' ? '' : 'none';
   document.getElementById('keywordsPanel').style.display = v === 'keywords' ? '' : 'none';
 
   document.getElementById('navOverview').classList.toggle('on', v === 'overview');
   document.getElementById('navResearch').classList.toggle('on', v === 'research');
   document.getElementById('navMatching').classList.toggle('on', v === 'matching');
+  document.getElementById('navViral').classList.toggle('on', v === 'viral');
   document.getElementById('navProposals').classList.toggle('on', v === 'proposals');
   document.getElementById('navKeywords').classList.toggle('on', v === 'keywords');
 
@@ -1030,6 +1081,7 @@ function applyView() {
     overview: [monthLabel(curMonth) + ' 트렌드 시그널', '최근 1년 시그널 종합 · 순위는 검색량 증감 + 팀 목격 + 시장 매칭'],
     research: ['시즌 트렌드 리서치', '런웨이·매체 기사에서 수집한 SS/FW 트렌드 — 근거 기사 링크 포함'],
     matching: ['트렌드 · 시장 신상 매칭', '트렌드를 고르면 그 트렌드로 나온 시장 신상(경쟁사)을 찾아줍니다'],
+    viral: ['SNS 바이럴 콘텐츠', '인스타 릴스에서 실제로 터진 패션 콘텐츠 — 조회·좋아요·댓글 기준'],
     proposals: ['브랜드별 트렌드 제안', '팀이 직접 큐레이션한 상품기획 방향 — 근거는 시그널과 네이버 검색량'],
     keywords: ['키워드 전체 보기', '이번 달 포착된 모든 키워드 — 탭·검색으로 필터링하세요'],
   };
@@ -1041,6 +1093,7 @@ function setView(v) {
   applyView();
   if (v === 'research') renderResearch();
   if (v === 'matching') initMatching();
+  if (v === 'viral') initViral();
   if (v === 'proposals') loadProposals();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (v === 'keywords') document.getElementById('search').focus();
@@ -1048,6 +1101,7 @@ function setView(v) {
 document.getElementById('navOverview').addEventListener('click', e => { e.preventDefault(); setView('overview'); });
 document.getElementById('navResearch').addEventListener('click', e => { e.preventDefault(); setView('research'); });
 document.getElementById('navMatching').addEventListener('click', e => { e.preventDefault(); setView('matching'); });
+document.getElementById('navViral').addEventListener('click', e => { e.preventDefault(); setView('viral'); });
 document.getElementById('navProposals').addEventListener('click', e => { e.preventDefault(); setView('proposals'); });
 document.getElementById('navKeywords').addEventListener('click', e => { e.preventDefault(); setView('keywords'); });
 
@@ -1059,6 +1113,9 @@ const SHEET_CSVS = [
   { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRXHbfhMkjSHtL_1A9LnQgPi7qBSVzVmEXj4Sd21D1pZ4iV1Ed_4mbUPBcZ7eXFJiJm7Pv1Y3wRQmwr/pub?output=csv", segment:"애슬레저" },
 ];
 const SHEET_CSV = SHEET_CSVS[0].url;   // 하위호환
+
+// SNS 바이럴 콘텐츠 (인스타 릴스 성과 데이터)
+const SHEET_VIRAL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTS-uKmAPEaO-ee3-Du5iIPFBIQTdVDYbkYJG3fjl_XWKA6vxPHqHzy2kEQjwobfs4a2QOxUuHpMCce/pub?output=csv";
 const CAT_GROUP = {
   top:['top','tops','knit','tshirt','shirt','sweater','blouse'],
   outer:['outer','outerwear','jacket','coat','padding','down','vest'],
@@ -1346,6 +1403,121 @@ window.toggleMMatch = async (pid) => {
   }
   renderMTrends(); renderMMatchPanel();
 };
+
+/* ── SNS Viral (인스타 릴스 성과) ── */
+let vRows = [], vLoaded = false, vCat = 'all', vBrand = 'all', vAd = 'all', vSort = 'score';
+
+const V_CATS = {
+  all:'전체', 상의:'상의', 아우터:'아우터', 바지:'하의', 원피스:'원피스',
+  '언더웨어/홈웨어':'언더·홈웨어', 워터웨어:'워터웨어',
+};
+
+function vNum(s) { const n = parseInt(String(s ?? '').replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
+function vFmt(n) {
+  if (n >= 100000000) return (n / 100000000).toFixed(1) + '억';
+  if (n >= 10000) return Math.round(n / 10000) + '만';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+async function initViral() {
+  if (vLoaded) { renderViral(); return; }
+  vLoaded = true;
+  await new Promise(resolve => {
+    Papa.parse(SHEET_VIRAL, {
+      download: true, header: true, skipEmptyLines: true,
+      complete: (res) => {
+        vRows = (res.data || []).map(r => ({
+          rank: vNum(mPick(r, ['순위','rank'])),
+          content: mPick(r, ['콘텐츠','content','caption']),
+          cat: mPick(r, ['세부분류','카테고리','category']),
+          adType: mPick(r, ['광고유형','ad_type']),
+          brand: mPick(r, ['브랜드','brand']),
+          product: mPick(r, ['제품명','product_name']),
+          retailer: mPick(r, ['유통사']),
+          account: mPick(r, ['계정/채널','계정','account']),
+          followers: vNum(mPick(r, ['팔로워 수','팔로워수','followers'])),
+          score: vNum(mPick(r, ['스코어','score'])),
+          views: vNum(mPick(r, ['조회수','views'])),
+          likes: vNum(mPick(r, ['좋아요 수','좋아요수','likes'])),
+          comments: vNum(mPick(r, ['댓글 수','댓글수','comments'])),
+          postUrl: mPick(r, ['게시물 링크','게시물링크','post_url']),
+          acctUrl: mPick(r, ['계정 링크','계정링크','account_url']),
+        })).filter(v => v.content || v.brand || v.account);
+        resolve();
+      },
+      error: () => { vRows = []; resolve(); },
+    });
+  });
+
+  const st = document.getElementById('viralStatus');
+  if (vRows.length) {
+    const totalViews = vRows.reduce((s, v) => s + v.views, 0);
+    st.className = 'viral-status';
+    st.innerHTML = `SNS 콘텐츠 <b>${vRows.length}건</b> 연동됨 · 누적 조회 ${vFmt(totalViews)}회`;
+  } else {
+    st.className = 'viral-status err';
+    st.innerHTML = `SNS 시트를 못 읽었어요. <b>웹에 게시(CSV)</b> 상태인지 확인해주세요.`;
+  }
+  renderViral();
+}
+
+function renderViralFilters() {
+  document.getElementById('viralCats').innerHTML = Object.entries(V_CATS)
+    .map(([k, v]) => `<button data-c="${k}" class="${k === vCat ? 'on' : ''}">${v}</button>`).join('');
+  document.getElementById('viralCats').onclick = e => {
+    if (!e.target.dataset.c) return;
+    vCat = e.target.dataset.c; renderViral();
+  };
+  // 브랜드 드롭다운 (등장 빈도순)
+  const bc = {};
+  for (const v of vRows) if (v.brand && v.brand !== '-') bc[v.brand] = (bc[v.brand] || 0) + 1;
+  const brands = Object.entries(bc).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  document.getElementById('viralBrand').innerHTML =
+    `<option value="all">전체 브랜드</option>` +
+    brands.map(b => `<option value="${esc(b)}" ${b === vBrand ? 'selected' : ''}>${esc(b)} (${bc[b]})</option>`).join('');
+}
+
+function renderViral() {
+  renderViralFilters();
+  let items = vRows.slice();
+  if (vCat !== 'all') items = items.filter(v => v.cat === vCat);
+  if (vBrand !== 'all') items = items.filter(v => v.brand === vBrand);
+  if (vAd === 'ad') items = items.filter(v => v.adType && v.adType !== '-');
+  if (vAd === 'organic') items = items.filter(v => !v.adType || v.adType === '-');
+
+  const key = { score:'score', views:'views', likes:'likes', comments:'comments' }[vSort];
+  items.sort((a, b) => b[key] - a[key]);
+  items = items.slice(0, 60);
+
+  const grid = document.getElementById('viralGrid');
+  if (!items.length) { grid.innerHTML = '<div class="tbl-empty" style="grid-column:1/-1">조건에 맞는 콘텐츠가 없어요</div>'; return; }
+
+  grid.innerHTML = items.map((v, i) => `
+    <div class="v-card">
+      <div class="v-top">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span class="v-rank">${i + 1}</span>
+            <span class="v-brand">${esc(v.brand && v.brand !== '-' ? v.brand : (v.account || '—'))}</span>
+          </div>
+          ${v.product && v.product !== '-' ? `<div class="v-prod">${esc(v.product)}</div>` : ''}
+        </div>
+        ${v.adType && v.adType !== '-' ? `<span class="v-ad">${esc(v.adType)}</span>` : ''}
+      </div>
+      ${v.content ? `<div class="v-content">${esc(v.content)}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${v.cat ? `<span class="v-cat">${esc(v.cat)}</span>` : ''}
+        <span class="v-acct">${esc(v.account || '')}${v.followers ? ' · 팔로워 ' + vFmt(v.followers) : ''}</span>
+      </div>
+      <div class="v-stats">
+        <span class="v-stat"><span>조회</span> <b>${vFmt(v.views)}</b></span>
+        <span class="v-stat"><span>좋아요</span> <b>${vFmt(v.likes)}</b></span>
+        <span class="v-stat"><span>댓글</span> <b>${vFmt(v.comments)}</b></span>
+        ${v.postUrl ? `<a class="v-link" href="${esc(v.postUrl)}" target="_blank" rel="noopener" style="margin-left:auto">게시물 →</a>` : ''}
+      </div>
+    </div>`).join('');
+}
 
 /* ── Research Radar ── */
 function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
