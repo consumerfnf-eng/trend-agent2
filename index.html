@@ -132,6 +132,8 @@
   .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
   .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   .panel-head h2 { font-size: 15px; font-weight: 600; }
+  .panel-head select { font-family:inherit; font-size:11px; color:var(--text-2); background:var(--panel-2);
+    border:1px solid var(--border); border-radius:6px; padding:5px 9px; cursor:pointer; }
   .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); }
   .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
   .chart-wrap { position: relative; height: 260px; }
@@ -261,8 +263,8 @@
   .m-propose { display:block; width:100%; text-align:center; margin-top:16px; padding:11px; background:linear-gradient(135deg,var(--violet),var(--blue)); border-radius:9px; color:#fff; font-weight:600; font-size:13px; }
   .m-propose.disabled { opacity:.4; pointer-events:none; }
 
-  /* ── SNS Viral (브랜드별 집계) ── */
-  .viral-status { font-size:12px; color:var(--text-3); margin-bottom:14px; }
+  /* ── SNS Viral (브랜드/크리에이터별 집계) ── */
+  .viral-status { font-size:12px; color:var(--text-2); margin-bottom:14px; }
   .viral-status b { color:var(--green); }
   .viral-status.err b { color:var(--red); }
   .viral-row2 { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
@@ -270,22 +272,35 @@
     border:1px solid var(--border); border-radius:7px; padding:8px 12px; cursor:pointer; }
   .vb-row { display:flex; gap:14px; align-items:flex-start; padding:15px 0; border-bottom:1px solid var(--border); }
   .vb-row:last-child { border-bottom:none; }
-  .vb-rank { font-size:13px; font-weight:700; color:var(--text-3); width:24px; text-align:right; flex-shrink:0; padding-top:1px; }
+  .vb-row.open { background:rgba(139,124,246,0.04); border-radius:10px; padding:15px 12px; }
+  .vb-rank { font-size:14px; font-weight:700; color:var(--text-2); width:24px; text-align:right; flex-shrink:0; padding-top:1px; }
   .vb-main { flex:1; min-width:0; }
-  .vb-head { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
-  .vb-brand { font-size:15px; font-weight:600; }
-  .vb-cat { font-size:10px; color:var(--text-3); border:1px solid var(--border); padding:2px 8px; border-radius:20px; }
-  .vb-posts { font-size:11px; color:var(--text-3); }
+  .vb-head { display:flex; align-items:center; gap:9px; flex-wrap:wrap; cursor:pointer; }
+  .vb-head:hover .vb-brand { color:var(--violet); }
+  .vb-brand { font-size:15px; font-weight:600; transition:color .12s; }
+  .vb-tag-acct { font-size:10px; padding:2px 7px; border-radius:20px; background:rgba(92,168,255,0.15); color:var(--blue); }
+  .vb-cat { font-size:11px; color:var(--text-2); border:1px solid var(--border); padding:2px 8px; border-radius:20px; }
+  .vb-posts { font-size:12px; color:var(--text-2); }
+  .vb-toggle { font-size:11px; color:var(--violet); margin-left:auto; }
   .vb-bar { height:6px; background:var(--panel-2); border-radius:3px; margin:9px 0 8px; overflow:hidden; }
   .vb-fill { height:100%; background:linear-gradient(90deg,var(--violet),var(--blue)); border-radius:3px; }
-  .vb-stats { display:flex; gap:16px; flex-wrap:wrap; font-size:11px; color:var(--text-3); }
-  .vb-stats b { color:var(--text); font-weight:600; font-size:12px; }
+  .vb-stats { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-2); }
+  .vb-stats b { color:var(--text); font-weight:600; font-size:13px; }
   .vb-avg { margin-left:auto; }
-  .vb-top { display:flex; align-items:center; gap:8px; margin-top:9px; padding-top:9px; border-top:1px solid var(--border);
-    font-size:11px; color:var(--text-2); flex-wrap:wrap; }
-  .vb-top-label { font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(240,168,92,0.16); color:var(--amber); }
-  .vb-top-v { color:var(--green); font-weight:600; }
-  .v-link { font-size:11px; color:var(--blue); text-decoration:underline; }
+
+  /* 펼친 콘텐츠 목록 */
+  .vb-list { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:2px; }
+  .vl-item { display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:8px; background:var(--panel-2); }
+  .vl-main { flex:1; min-width:0; }
+  .vl-title { font-size:12.5px; color:var(--text); line-height:1.45;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .vl-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; font-size:11px; color:var(--text-3); align-items:center; }
+  .vl-cat { border:1px solid var(--border); padding:1px 7px; border-radius:20px; color:var(--text-2); }
+  .vl-ad { padding:1px 7px; border-radius:4px; background:rgba(240,168,92,0.18); color:var(--amber); }
+  .vl-stats { text-align:right; flex-shrink:0; }
+  .vl-v { display:block; font-size:13px; font-weight:600; color:var(--green); }
+  .vl-sub { font-size:11px; color:var(--text-3); }
+  .vl-link { font-size:11px; color:var(--blue); text-decoration:underline; flex-shrink:0; }
 
   /* ── Table ── */
   .table-panel { margin-top: 14px; }
@@ -399,13 +414,28 @@
     <div class="row2" id="row2">
       <div class="panel">
         <div class="panel-head">
-          <h2>네이버 검색량 추이 — Top 5</h2>
-          <span id="chartStatus" style="font-size:11px;color:var(--text-3)"></span>
+          <h2>네이버 검색량 추이</h2>
+          <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+            <select id="naverRange" onchange="nvWeeks=parseInt(this.value);rerenderOverview()">
+              <option value="5">최근 1개월</option>
+              <option value="13" selected>최근 3개월</option>
+              <option value="26">최근 6개월</option>
+              <option value="52">최근 1년</option>
+              <option value="104">최근 2년</option>
+            </select>
+            <span id="chartStatus" style="font-size:11px;color:var(--text-3)"></span>
+          </div>
         </div>
         <div class="chart-wrap"><canvas id="chart"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2>검색량 변화</h2><span style="font-size:11px;color:var(--text-3)">최근 4주 vs 이전 4주</span></div>
+        <div class="panel-head"><h2>검색량 변화</h2>
+          <select id="naverCompare" onchange="nvCompare=this.value;rerenderOverview()" style="margin-left:auto">
+            <option value="mom">전월 대비</option>
+            <option value="yoy">전년 동기 대비</option>
+            <option value="yoy2">2년 전 동기 대비</option>
+          </select>
+        </div>
         <div class="topkw" id="topkw"></div>
       </div>
     </div>
@@ -795,6 +825,16 @@ async function loadKwMap() {
   return kwMap;
 }
 
+let nvWeeks = 13;        // 차트 기간 (주)
+let nvCompare = 'mom';   // mom(전월) | yoy(전년동기) | yoy2(2년전)
+
+// 비교 기준별로 필요한 최소 조회 기간(주)
+function nvFetchWeeks() {
+  if (nvCompare === 'yoy') return Math.max(nvWeeks, 56);    // 1년 전 구간 포함
+  if (nvCompare === 'yoy2') return Math.max(nvWeeks, 108);  // 2년 전 구간 포함
+  return Math.max(nvWeeks, 9);                              // 전월 비교는 8주면 충분
+}
+
 async function renderNaver(top) {
   const status = document.getElementById('chartStatus');
   const panel = document.getElementById('topkw');
@@ -804,15 +844,15 @@ async function renderNaver(top) {
     if (chart) { chart.destroy(); chart = null; }
     return;
   }
-  status.textContent = '네이버 데이터랩 조회 중…';
+  status.textContent = '조회 중…';
   try {
     const map = await loadKwMap();
     const groups = top.map(c => ({ name: c.keyword, kr: map[c.keyword] || c.keyword }));
-    const { data, error } = await sb.functions.invoke('keyword-trend', { body: { groups, weeks: 16 } });
+    const { data, error } = await sb.functions.invoke('keyword-trend', { body: { groups, weeks: nvFetchWeeks() } });
     if (error || !data || !data.results) throw new Error(error?.message || data?.errorMessage || data?.error || 'no data');
     drawNaverChart(data);
     drawDeltaPanel(data, map);
-    status.textContent = '상대 검색량 지수 · 주간 · 네이버 데이터랩';
+    status.textContent = '네이버 데이터랩 · 주간 지수';
   } catch (e) {
     status.textContent = '';
     if (chart) { chart.destroy(); chart = null; }
@@ -822,13 +862,15 @@ async function renderNaver(top) {
 }
 
 function drawNaverChart(res) {
-  const labels = (res.results[0]?.data || []).map(d => {
-    const p = d.period.slice(5).split('-');
-    return (+p[0]) + '.' + (+p[1]);
+  // 비교용으로 더 길게 받았어도, 차트는 선택한 기간만 표시
+  const cut = -nvWeeks;
+  const labels = (res.results[0]?.data || []).slice(cut).map(d => {
+    const p = d.period.slice(2).split('-');   // YY-MM-DD
+    return nvWeeks > 52 ? (+p[0]) + '.' + (+p[1]) : (+p[1]) + '.' + (+p[2]);
   });
   const datasets = res.results.map((r, i) => ({
     label: r.title,
-    data: r.data.map(d => d.ratio),
+    data: r.data.slice(cut).map(d => d.ratio),
     borderColor: LINE_COLORS[i % 5],
     backgroundColor: 'transparent',
     tension: 0.4, pointRadius: 0, borderWidth: 2,
@@ -852,16 +894,29 @@ function drawNaverChart(res) {
   });
 }
 
-/* ── 검색량 변화 패널 (최근 4주 vs 이전 4주) ── */
+/* ── 검색량 변화 패널 (전월 / 전년 동기 / 2년 전 비교) ── */
+const CMP_LABEL = { mom: '최근 4주 vs 이전 4주', yoy: '최근 4주 vs 작년 같은 기간', yoy2: '최근 4주 vs 2년 전 같은 기간' };
+
 function drawDeltaPanel(res, map) {
   const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
   const items = res.results.map((r, i) => {
     const v = r.data.map(d => d.ratio);
-    const recent = avg(v.slice(-4)), before = avg(v.slice(-8, -4));
-    const pct = before > 0 ? Math.round((recent - before) / before * 100) : null;
+    const recent = avg(v.slice(-4));
+    let before = null;
+    if (nvCompare === 'mom') {
+      before = v.length >= 8 ? avg(v.slice(-8, -4)) : null;
+    } else if (nvCompare === 'yoy') {
+      // 52주 전 같은 4주 구간
+      before = v.length >= 56 ? avg(v.slice(-56, -52)) : null;
+    } else if (nvCompare === 'yoy2') {
+      before = v.length >= 108 ? avg(v.slice(-108, -104)) : null;
+    }
+    const pct = (before !== null && before > 0) ? Math.round((recent - before) / before * 100) : null;
     return { title: r.title, kr: (r.keywords || [])[0] || map[r.title] || '', pct, color: LINE_COLORS[i % 5] };
   });
-  document.getElementById('topkw').innerHTML = items.map(it => `
+  document.getElementById('topkw').innerHTML =
+    `<div style="font-size:11px;color:var(--text-3);margin-bottom:10px">${CMP_LABEL[nvCompare]}</div>` +
+    items.map(it => `
     <div class="tk" onclick='openSheet(${JSON.stringify(esc(it.title))})'>
       <div class="tk-row">
         <span class="tk-name"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${it.color};margin-right:8px"></i>${esc(it.title)}</span>
@@ -1410,7 +1465,7 @@ window.toggleMMatch = async (pid) => {
 };
 
 /* ── SNS Viral (인스타 릴스 성과) ── */
-let vRows = [], vLoaded = false, vCat = 'all', vAd = 'all', vSort = 'views';
+let vRows = [], vLoaded = false, vCat = 'all', vAd = 'all', vSort = 'views', vOpen = null;
 
 function vNum(s) { const n = parseInt(String(s ?? '').replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
 function vFmt(n) {
@@ -1475,52 +1530,71 @@ function renderViral() {
   if (vAd === 'ad') items = items.filter(v => v.adType && v.adType !== '-');
   if (vAd === 'organic') items = items.filter(v => !v.adType || v.adType === '-');
 
-  // 브랜드별 집계
-  const byBrand = {};
+  // 브랜드별 집계 — 브랜드 미상은 계정(크리에이터) 단위로 묶어 살림
+  const byKey = {};
   for (const v of items) {
-    const b = (v.brand && v.brand !== '-') ? v.brand : null;
-    if (!b) continue;
-    if (!byBrand[b]) byBrand[b] = { brand:b, posts:0, views:0, likes:0, comments:0, top:null, cats:{} };
-    const g = byBrand[b];
+    const hasBrand = v.brand && v.brand !== '-';
+    const key = hasBrand ? 'B:' + v.brand : 'A:' + (v.account || '미상');
+    if (!byKey[key]) byKey[key] = {
+      label: hasBrand ? v.brand : (v.account || '미상'),
+      isBrand: hasBrand, posts:0, views:0, likes:0, comments:0, cats:{}, list:[],
+    };
+    const g = byKey[key];
     g.posts++; g.views += v.views; g.likes += v.likes; g.comments += v.comments;
     if (v.cat && v.cat !== '-') g.cats[v.cat] = (g.cats[v.cat] || 0) + 1;
-    if (!g.top || v.views > g.top.views) g.top = v;
+    g.list.push(v);
   }
-  let brands = Object.values(byBrand).map(g => ({
-    ...g, engage: g.likes + g.comments, avg: g.posts ? Math.round(g.views / g.posts) : 0,
+  let groups = Object.entries(byKey).map(([k, g]) => ({
+    ...g, key: k, engage: g.likes + g.comments, avg: g.posts ? Math.round(g.views / g.posts) : 0,
+    list: g.list.sort((a, b) => b.views - a.views),
   }));
 
-  const key = { views:'views', engage:'engage', posts:'posts', avg:'avg' }[vSort];
-  brands.sort((a, b) => b[key] - a[key]);
-  brands = brands.slice(0, 30);
+  const sortKey = { views:'views', engage:'engage', posts:'posts', avg:'avg' }[vSort];
+  groups.sort((a, b) => b[sortKey] - a[sortKey]);
+  groups = groups.slice(0, 30);
 
   const box = document.getElementById('viralBrands');
-  if (!brands.length) { box.innerHTML = '<div class="tbl-empty">조건에 맞는 브랜드가 없어요</div>'; return; }
+  if (!groups.length) { box.innerHTML = '<div class="tbl-empty">조건에 맞는 콘텐츠가 없어요</div>'; return; }
 
-  const max = brands[0][key] || 1;
-  box.innerHTML = brands.map((g, i) => {
-    const pct = Math.max(3, Math.round((g[key] / max) * 100));
+  const max = groups[0][sortKey] || 1;
+  box.innerHTML = groups.map((g, i) => {
+    const pct = Math.max(3, Math.round((g[sortKey] / max) * 100));
     const topCat = Object.entries(g.cats).sort((a, b) => b[1] - a[1])[0];
-    return `<div class="vb-row">
+    const open = vOpen === g.key;
+    return `<div class="vb-row ${open ? 'open' : ''}">
       <div class="vb-rank">${i + 1}</div>
       <div class="vb-main">
-        <div class="vb-head">
-          <span class="vb-brand">${esc(g.brand)}</span>
+        <div class="vb-head" onclick="vOpen = (vOpen==='${esc(g.key)}' ? null : '${esc(g.key)}'); renderViral()">
+          <span class="vb-brand">${esc(g.label)}</span>
+          ${!g.isBrand ? `<span class="vb-tag-acct">크리에이터</span>` : ''}
           ${topCat ? `<span class="vb-cat">${esc(topCat[0])}</span>` : ''}
           <span class="vb-posts">콘텐츠 ${g.posts}건</span>
+          <span class="vb-toggle">${open ? '▲ 접기' : '▼ 콘텐츠 보기'}</span>
         </div>
         <div class="vb-bar"><div class="vb-fill" style="width:${pct}%"></div></div>
         <div class="vb-stats">
           <span><b>${vFmt(g.views)}</b> 조회</span>
           <span><b>${vFmt(g.likes)}</b> 좋아요</span>
           <span><b>${vFmt(g.comments)}</b> 댓글</span>
-          <span class="vb-avg">평균 ${vFmt(g.avg)} 조회</span>
+          <span class="vb-avg">평균 <b>${vFmt(g.avg)}</b> 조회</span>
         </div>
-        ${g.top ? `<div class="vb-top">
-          <span class="vb-top-label">최고</span>
-          ${esc((g.top.product && g.top.product !== '-') ? g.top.product : (g.top.content || '').slice(0, 40))}
-          <span class="vb-top-v">${vFmt(g.top.views)}</span>
-          ${g.top.postUrl ? `<a href="${esc(g.top.postUrl)}" target="_blank" rel="noopener" class="v-link">게시물 →</a>` : ''}
+        ${open ? `<div class="vb-list">
+          ${g.list.map(v => `<div class="vl-item">
+            <div class="vl-main">
+              <div class="vl-title">${esc((v.product && v.product !== '-') ? v.product : (v.content || '제목 없음'))}</div>
+              <div class="vl-meta">
+                ${v.cat && v.cat !== '-' ? `<span class="vl-cat">${esc(v.cat)}</span>` : ''}
+                ${v.adType && v.adType !== '-' ? `<span class="vl-ad">${esc(v.adType)}</span>` : ''}
+                <span>${esc(v.account || '')}</span>
+                ${v.followers ? `<span>팔로워 ${vFmt(v.followers)}</span>` : ''}
+              </div>
+            </div>
+            <div class="vl-stats">
+              <span class="vl-v">${vFmt(v.views)}</span>
+              <span class="vl-sub">♥ ${vFmt(v.likes)} · 💬 ${vFmt(v.comments)}</span>
+            </div>
+            ${v.postUrl ? `<a href="${esc(v.postUrl)}" target="_blank" rel="noopener" class="vl-link">보기 →</a>` : ''}
+          </div>`).join('')}
         </div>` : ''}
       </div>
     </div>`;
