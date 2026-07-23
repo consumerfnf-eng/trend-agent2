@@ -3,132 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>제안 작성 — Trend Signal</title>
+<title>컨셉 제안 — Trend Signal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0E0F12; --panel:#16171B; --panel-2:#1C1D22; --border:#26272D;
     --text:#ECEDEF; --text-2:#9A9CA5; --text-3:#6C6E78;
-    --violet:#8B7CF6; --blue:#5CA8FF; --green:#34C08B; --red:#F06A6A;
+    --violet:#8B7CF6; --blue:#5CA8FF; --green:#34C08B; --amber:#F0A85C; --red:#F06A6A;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--bg); color:var(--text); font-family:'Inter','IBM Plex Sans KR',sans-serif; font-size:14px; }
-  .wrap { max-width:820px; margin:0 auto; padding:26px 20px 80px; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width:860px; margin:0 auto; padding:24px 22px 90px; }
 
-  .top { display:flex; align-items:center; gap:12px; padding-bottom:18px; border-bottom:1px solid var(--border); margin-bottom:22px; }
+  .top { display:flex; align-items:center; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--border); margin-bottom:26px; }
   .top .mark { width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--violet),var(--blue));
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; }
   .top h1 { font-size:18px; font-weight:700; flex:1; }
-  .top a { font-size:12px; color:var(--text-2); }
+  .top a { font-size:13px; color:var(--text-2); }
 
-  label { display:block; font-size:12px; color:var(--text-2); margin:22px 0 8px; font-weight:500; }
-  .field { width:100%; background:var(--panel); border:1px solid var(--border); border-radius:9px; color:var(--text);
-    font-family:inherit; font-size:15px; padding:12px 14px; }
+  /* 단계 블록 */
+  .step { margin-bottom:30px; }
+  .step-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .step-no { width:24px; height:24px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--violet); flex-shrink:0; }
+  .step-title { font-size:15px; font-weight:600; }
+  .step-sub { font-size:12px; color:var(--text-3); margin-left:auto; }
+  .step-body { padding-left:34px; }
+
+  /* 트렌드 카드 */
+  .trend-card { background:var(--panel-2); border:1px solid var(--border); border-left:3px solid var(--violet);
+    border-radius:10px; padding:15px 17px; }
+  .tc-kw { font-size:18px; font-weight:700; text-transform:capitalize; }
+  .tc-sum { font-size:13px; color:var(--text-2); line-height:1.6; margin-top:7px; }
+  .tc-link { font-size:11px; color:var(--blue); text-decoration:underline; margin-top:10px; display:inline-block; }
+  .tc-empty { color:var(--text-3); font-size:13px; }
+
+  /* 시중 제품 그리드 */
+  .mk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .mk-item { border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--panel); }
+  .mk-img { aspect-ratio:3/4; background:var(--panel-2); display:flex; align-items:center; justify-content:center; color:var(--text-3); }
+  .mk-img img { width:100%; height:100%; object-fit:cover; }
+  .mk-body { padding:7px 8px 8px; }
+  .mk-name { font-size:10.5px; font-weight:600; line-height:1.35; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .mk-meta { font-size:9.5px; color:var(--text-3); margin-top:3px; }
+  .mk-empty { color:var(--text-3); font-size:13px; padding:16px 0; line-height:1.7; }
+
+  /* 브랜드 선택 */
+  .brand-seg { display:flex; gap:8px; flex-wrap:wrap; }
+  .brand-seg button { font-family:inherit; font-size:13px; padding:10px 18px; border-radius:22px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text-2); cursor:pointer; transition:.12s; }
+  .brand-seg button.on { background:linear-gradient(135deg,var(--violet),var(--blue)); color:#fff; border-color:transparent; font-weight:600; }
+
+  .prompt-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; color:var(--text-3); }
+  .prompt-reset { margin-left:auto; font-family:inherit; font-size:11px; color:var(--violet);
+    background:none; border:1px solid var(--border); border-radius:20px; padding:4px 11px; cursor:pointer; }
+  .prompt-reset:hover { background:var(--panel-2); }
+  .prompt-tips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .prompt-tips button { font-family:inherit; font-size:11px; color:var(--text-2); background:var(--panel-2);
+    border:1px solid var(--border); border-radius:20px; padding:5px 11px; cursor:pointer; }
+  .prompt-tips button:hover { border-color:var(--violet); color:var(--text); }
+
+  /* 생성 */
+  .gen-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .gen-btn { font-family:inherit; font-size:14px; font-weight:600; padding:12px 22px; border-radius:10px; border:none;
+    background:linear-gradient(135deg,var(--violet),var(--blue)); color:#fff; cursor:pointer; }
+  .gen-btn:disabled { opacity:.5; cursor:default; }
+  .gen-hint { font-size:12px; color:var(--text-3); }
+  .gen-box { border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel); max-width:420px; }
+  .gen-box img { width:100%; display:block; }
+  .gen-cap { padding:9px 12px; font-size:11px; color:var(--text-3); border-top:1px solid var(--border); }
+  .gen-ph { aspect-ratio:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;
+    color:var(--text-3); font-size:12px; background:var(--panel-2); }
+
+  /* 메모 */
+  .field { width:100%; font-family:inherit; font-size:14px; color:var(--text); background:var(--panel-2);
+    border:1px solid var(--border); border-radius:9px; padding:12px 14px; }
   .field:focus { outline:none; border-color:var(--violet); }
-  textarea.field { resize:vertical; min-height:96px; line-height:1.6; }
+  textarea.field { min-height:90px; resize:vertical; line-height:1.6; }
 
-  .seg { display:flex; gap:6px; flex-wrap:wrap; }
-  .seg button { font-family:inherit; font-size:13px; cursor:pointer; color:var(--text-2);
-    background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:8px 15px; }
-  .seg button.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--violet),var(--blue)); font-weight:600; }
-
-  .hint { font-size:11px; color:var(--text-3); margin-top:6px; line-height:1.6; }
-
-  /* 시그널 선택 */
-  .sig-picker { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:4px; max-height:420px; overflow-y:auto;
-    padding:4px; border:1px solid var(--border); border-radius:10px; background:var(--panel); }
-  @media (max-width:680px){ .sig-picker { grid-template-columns:repeat(3,1fr); } }
-  .sig-pick { position:relative; border:2px solid transparent; border-radius:9px; overflow:hidden; cursor:pointer; background:var(--panel-2); }
-  .sig-pick.on { border-color:var(--violet); }
-  .sig-pick .p-img { aspect-ratio:1; display:flex; align-items:center; justify-content:center; color:var(--text-3); font-size:16px; overflow:hidden; }
-  .sig-pick .p-img img { width:100%; height:100%; object-fit:cover; }
-  .sig-pick .p-cap { font-size:10px; padding:5px 6px; color:var(--text-2); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-  .sig-pick .check { position:absolute; top:5px; right:5px; width:18px; height:18px; border-radius:50%;
-    background:var(--violet); color:#fff; font-size:11px; display:none; align-items:center; justify-content:center; }
-  .sig-pick.on .check { display:flex; }
-  .picker-empty { grid-column:1/-1; text-align:center; color:var(--text-3); font-size:12px; padding:26px 0; }
-
-  .kw-tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:4px; }
-  .kw-tag { font-size:12px; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--panel);
-    color:var(--text-2); cursor:pointer; }
-  .kw-tag.on { background:rgba(139,124,246,0.16); border-color:var(--violet); color:var(--text); }
-
-  .matched-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:9px; }
-  .mg-item { border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--panel); }
-  .mg-img { aspect-ratio:3/4; background:var(--panel-2); display:flex; align-items:center; justify-content:center; color:var(--text-3); }
-  .mg-img img { width:100%; height:100%; object-fit:cover; }
-  .mg-body { padding:6px 7px 7px; }
-  .mg-name { font-size:10px; font-weight:600; line-height:1.35; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .mg-meta { font-size:9px; color:var(--text-3); margin-top:3px; }
-
-  .ai-img-row { display:flex; align-items:center; gap:12px; }
-  .ai-img-row .btn { flex:0 0 auto; }
-  .ai-img-box { margin-top:12px; border:1px solid var(--border); border-radius:11px; overflow:hidden; max-width:340px; background:var(--panel); }
-  .ai-img-box img { width:100%; display:block; }
-
-  .actions { display:flex; gap:10px; margin-top:30px; }
-  .btn { flex:1; padding:14px; border-radius:9px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; border:none; }
+  .actions { display:flex; gap:10px; margin-top:34px; padding-left:34px; }
+  .btn { font-family:inherit; font-size:14px; font-weight:600; padding:12px 22px; border-radius:9px; cursor:pointer; border:none; }
   .btn.primary { background:linear-gradient(135deg,var(--violet),var(--blue)); color:#fff; }
-  .btn.ghost { background:var(--panel); border:1px solid var(--border); color:var(--text-2); }
-  .btn:disabled { opacity:.5; cursor:default; }
-  .toast { margin-top:14px; padding:12px 14px; border-radius:8px; font-size:13px; display:none; }
-  .toast.show { display:block; }
-  .toast.ok { background:rgba(52,192,139,0.14); color:var(--green); }
-  .toast.err { background:rgba(240,106,106,0.14); color:var(--red); }
+  .btn.ghost { background:var(--panel-2); color:var(--text-2); border:1px solid var(--border); }
+
+  .toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+    background:var(--panel); border:1px solid var(--border); border-radius:9px; padding:12px 18px;
+    font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:50; }
+  .toast.show { opacity:1; }
+  .toast.err { border-color:var(--red); color:var(--red); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <div class="mark">TS</div>
-    <h1 id="pageH1">새 제안 작성</h1>
-    <a href="./04_dashboard.html">← 대시보드</a>
+    <h1 id="pageTitle">컨셉 제안</h1>
+    <a href="./index.html">← 대시보드</a>
   </div>
 
-  <label>브랜드</label>
-  <div class="seg" id="brandSeg"></div>
-
-  <label>카테고리</label>
-  <div class="seg" id="catSeg"></div>
-
-  <label>제안 제목 — 예: "오프숄더 + 레트로 그래픽으로"</label>
-  <input class="field" id="title" placeholder="한 줄로 방향을 요약">
-
-  <label>방향 · 근거 — 왜 이렇게 가야 하는지 팀의 판단을 씁니다</label>
-  <textarea class="field" id="direction" placeholder="예: 성수·한남에서 오프숄더 실루엣이 반복 목격됨. MLB 여성 라인에 레트로 볼드 그래픽을 얹으면 스포티 무드와 맞물려 차별화 가능. 25SS 대비 어깨 노출 니즈 상승."></textarea>
-
-  <label>근거 시그널 — 이 제안을 뒷받침할 이미지를 고르세요</label>
-  <div class="hint" style="margin-bottom:8px">선택한 카테고리·브랜드에 맞는 시그널이 위에 먼저 떠요. 여러 장 선택 가능.</div>
-  <div class="sig-picker" id="sigPicker"></div>
-
-  <label>검색량 근거 키워드 — 대시보드에서 네이버 검색량을 자동 첨부합니다</label>
-  <div class="kw-tags" id="kwTags"></div>
-  <div class="hint">고른 시그널의 키워드가 자동으로 뜹니다. 제안과 관련된 것만 남기세요.</div>
-
-  <div id="matchedBox" style="display:none">
-    <label>매칭된 시장 신상 — 이 트렌드로 경쟁사가 낸 상품</label>
-    <div class="hint" style="margin-bottom:8px">매칭 화면에서 연결한 신상이에요. 제안의 시장 근거가 됩니다.</div>
-    <div class="matched-grid" id="matchedGrid"></div>
+  <!-- ① 트렌드 -->
+  <div class="step">
+    <div class="step-head">
+      <span class="step-no">1</span>
+      <span class="step-title">이런 트렌드가 있고</span>
+    </div>
+    <div class="step-body">
+      <div class="trend-card" id="trendCard">
+        <div class="tc-empty">매칭 화면에서 트렌드를 골라 들어오면 여기 표시됩니다</div>
+      </div>
+    </div>
   </div>
 
-  <label>작성자</label>
-  <input class="field" id="author" placeholder="이름">
-
-  <label>AI 컨셉 이미지 — 이 트렌드를 선택한 브랜드 무드로 시각화</label>
-  <div class="hint" style="margin-bottom:8px">방향 제안용 컨셉 이미지예요. 실제 디자인이 아니라 "이런 무드로" 참고용입니다.</div>
-  <div class="ai-img-row">
-    <button class="btn ghost" id="genImgBtn" type="button">✨ AI 이미지 생성</button>
-    <span class="hint" id="genImgHint"></span>
+  <!-- ② 시중 제품 -->
+  <div class="step">
+    <div class="step-head">
+      <span class="step-no">2</span>
+      <span class="step-title">시중엔 이런 제품이 나왔고</span>
+      <span class="step-sub" id="mkCount"></span>
+    </div>
+    <div class="step-body">
+      <div class="mk-grid" id="mkGrid"></div>
+      <div class="mk-empty" id="mkEmpty">매칭한 시장 신상이 없어요. 매칭 화면에서 먼저 연결해보세요.</div>
+    </div>
   </div>
-  <div class="ai-img-box" id="aiImgBox" style="display:none">
-    <img id="aiImg" alt="AI 컨셉 이미지">
+
+  <!-- ③ 우리 브랜드로 -->
+  <div class="step">
+    <div class="step-head">
+      <span class="step-no">3</span>
+      <span class="step-title">우리 브랜드로 풀면</span>
+    </div>
+    <div class="step-body">
+      <div class="brand-seg" id="brandSeg"></div>
+
+      <div style="margin-top:16px">
+        <div class="prompt-head">
+          <span>이미지 프롬프트 — 자동으로 채워지고, 직접 고칠 수 있어요</span>
+          <button class="prompt-reset" id="promptReset" type="button">↻ 자동 문구로</button>
+        </div>
+        <textarea class="field" id="prompt" style="min-height:110px;font-size:13px"></textarea>
+        <div class="prompt-tips" id="promptTips"></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="gen-row">
+          <button class="gen-btn" id="genBtn" type="button">✨ 컨셉 이미지 생성</button>
+          <span class="gen-hint" id="genHint">브랜드를 고르고 눌러주세요 · 20~40초</span>
+        </div>
+        <div class="gen-box" id="genBox">
+          <div class="gen-ph" id="genPh">
+            <div style="font-size:26px">◇</div>
+            <div>생성된 컨셉 이미지가 여기 표시됩니다</div>
+          </div>
+          <img id="genImg" alt="AI 컨셉 이미지" style="display:none">
+          <div class="gen-cap" id="genCap" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 메모 -->
+  <div class="step">
+    <div class="step-head">
+      <span class="step-no">4</span>
+      <span class="step-title">이런 제품이 나오면 좋겠다</span>
+      <span class="step-sub">선택</span>
+    </div>
+    <div class="step-body">
+      <textarea class="field" id="note" placeholder="예: 젤리 소재를 MLB 로고 슬라이드에 적용. 투명 스트랩 + 볼드 로고로 스트릿 무드 유지하면서 여름 시즌 대응."></textarea>
+    </div>
   </div>
 
   <div class="actions">
     <button class="btn ghost" id="deleteBtn" style="display:none">삭제</button>
-    <button class="btn primary" id="saveBtn">제안 저장</button>
+    <button class="btn primary" id="saveBtn">컨셉 저장</button>
   </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -140,130 +192,85 @@ const SUPABASE_ANON_KEY = "sb_publishable_D444jYf-8FaJsPl7YJ6Cew_kKfcWIwP";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const BRANDS = { mlb:'MLB', discovery:'Discovery', sergio:'Sergio Tacchini', duvetica:'Duvetica' };
-const CATS = { tshirt:'티셔츠', outer:'아우터', pants:'팬츠', skirt:'스커트', dress:'원피스', shoes:'신발', cap:'모자', bag:'백', acc:'액세서리' };
-// 시그널의 category → 제안 category 매핑 (근거 후보 필터용)
-const CAT_MATCH = {
-  tshirt:['top'], outer:['outer'], pants:['pants'], skirt:['skirt'], dress:['dress'],
-  shoes:['shoes'], cap:['acc'], bag:['bag'], acc:['acc'],
-};
-
-let curBrand = 'mlb', curCat = 'tshirt', curTrend = '';
-let allSignals = [], selectedSigs = new Set(), selectedKws = new Set();
-let editId = null;
-
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
-function seg(elId, map, cur, onPick) {
-  document.getElementById(elId).innerHTML = Object.entries(map)
-    .map(([k, v]) => `<button data-k="${k}" class="${k === cur ? 'on' : ''}">${v}</button>`).join('');
-  document.getElementById(elId).onclick = e => { if (e.target.dataset.k) onPick(e.target.dataset.k); };
-}
-
-function renderSegs() {
-  seg('brandSeg', BRANDS, curBrand, k => { curBrand = k; renderSegs(); renderPicker(); });
-  seg('catSeg', CATS, curCat, k => { curCat = k; renderSegs(); renderPicker(); });
-}
-
-/* 근거 시그널 후보: 카테고리 매칭되고 이미지 있는 것 우선 */
-function renderPicker() {
-  const match = CAT_MATCH[curCat] || [];
-  const ranked = [...allSignals].sort((a, b) => {
-    const am = match.includes(a.category) ? 1 : 0, bm = match.includes(b.category) ? 1 : 0;
-    const ai = a.image_url ? 1 : 0, bi = b.image_url ? 1 : 0;
-    return (bm - am) || (bi - ai) || (new Date(b.created_at) - new Date(a.created_at));
-  }).slice(0, 40);
-
-  document.getElementById('sigPicker').innerHTML = ranked.length
-    ? ranked.map(s => `
-      <div class="sig-pick ${selectedSigs.has(s.id) ? 'on' : ''}" onclick="toggleSig('${s.id}')">
-        <div class="check">✓</div>
-        <div class="p-img">${s.image_url ? `<img src="${esc(s.image_url)}" alt="">` : '🔗'}</div>
-        <div class="p-cap">${esc((s.keywords||[])[0] || s.note || '—')}</div>
-      </div>`).join('')
-    : '<div class="picker-empty">등록된 시그널이 없어요. SIGNAL BOX에서 먼저 수집하세요.</div>';
-}
-
-window.toggleSig = id => {
-  selectedSigs.has(id) ? selectedSigs.delete(id) : selectedSigs.add(id);
-  syncKeywords();
-  renderPicker();
-};
-
-/* 선택한 시그널들의 키워드 → 검색량 근거 후보 */
-function syncKeywords() {
-  const pool = new Set();
-  for (const s of allSignals) if (selectedSigs.has(s.id)) for (const k of (s.keywords || [])) pool.add(k);
-  // 선택 해제된 시그널에만 있던 키워드는 자동 정리
-  for (const k of [...selectedKws]) if (!pool.has(k)) selectedKws.delete(k);
-  for (const k of pool) if (!selectedKws.has(k)) selectedKws.add(k);   // 새로 추가된 건 기본 선택
-  renderKwTags(pool);
-}
-function renderKwTags(pool) {
-  const arr = [...pool];
-  document.getElementById('kwTags').innerHTML = arr.length
-    ? arr.map(k => `<span class="kw-tag ${selectedKws.has(k) ? 'on' : ''}" onclick="toggleKw('${esc(k)}')">${esc(k)}</span>`).join('')
-    : '<span class="hint">근거 시그널을 고르면 키워드가 여기 떠요</span>';
-}
-window.toggleKw = k => { selectedKws.has(k) ? selectedKws.delete(k) : selectedKws.add(k);
-  syncKeywords(); };
+let curBrand = 'mlb', curCat = 'shoes', curTrend = '', curTrendId = '', curSummary = '', editId = null;
+let genImgB64 = null;
 
 function showToast(msg, ok) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + (ok ? 'ok' : 'err');
+  t.textContent = msg; t.className = 'toast show' + (ok === false ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 2600);
 }
 
-/* 저장 */
-document.getElementById('saveBtn').addEventListener('click', async () => {
-  const title = document.getElementById('title').value.trim();
-  const direction = document.getElementById('direction').value.trim();
-  const author = document.getElementById('author').value.trim();
-  if (!title) { showToast('제목을 입력해주세요.', false); return; }
+/* 프롬프트 자동 생성 */
+const BRAND_MOOD_KO = {
+  mlb: 'MLB 스트릿 캐주얼 무드 — 볼드한 바시티 그래픽, 캡·로고 플레이, 10~20대 스포티 스트릿웨어',
+  discovery: '디스커버리 아웃도어 라이프스타일 무드 — 기능적 어반 아웃도어, 고프코어, 일상에서 입는 테크니컬 감성',
+  sergio: '세르지오 타키니 무드 — 레트로 테니스 헤리티지, 클린한 유러피언 스포티 캐주얼, 80s 빈티지 스포츠웨어',
+  duvetica: '듀베티카 무드 — 프리미엄 미니멀 럭셔리 아우터, 정제된 다운, 이탈리안 미니멀리즘, 차분한 톤',
+};
+function buildPrompt() {
+  const mood = BRAND_MOOD_KO[curBrand] || '';
+  return [
+    `트렌드: ${curTrend}${curSummary ? ' — ' + curSummary : ''}`,
+    `브랜드 무드: ${mood}`,
+    `카테고리: ${curCat}`,
+    '',
+    '위 트렌드를 이 브랜드 무드로 재해석한 단일 제품 컨셉 이미지.',
+    '깔끔한 뉴트럴 배경의 스튜디오 제품컷, 중앙 배치, 사실적인 이커머스 상품 사진 스타일.',
+    '텍스트·로고 워터마크·사람 얼굴 없이.',
+  ].join('\n');
+}
+function resetPrompt() { document.getElementById('prompt').value = buildPrompt(); }
 
-  const payload = {
-    brand: curBrand, category: curCat, title, direction: direction || null,
-    keywords: [...selectedKws], signal_ids: [...selectedSigs], author: author || null,
+const PROMPT_TIPS = ['색감 밝게','소재 질감 강조','스튜디오 조명','착용컷으로','디테일 클로즈업','컬러 배리에이션 3가지','미니멀하게','레트로 감성'];
+function renderPromptTips() {
+  document.getElementById('promptTips').innerHTML =
+    PROMPT_TIPS.map(t => `<button type="button" data-t="${esc(t)}">+ ${esc(t)}</button>`).join('');
+  document.getElementById('promptTips').onclick = e => {
+    const t = e.target.dataset.t; if (!t) return;
+    const el = document.getElementById('prompt');
+    el.value = el.value.trimEnd() + '\n' + t;
+    el.focus();
   };
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = '저장 중…';
-  try {
-    if (editId) {
-      const { error } = await sb.from('proposals').update(payload).eq('id', editId);
-      if (error) throw error;
-    } else {
-      const { error } = await sb.from('proposals').insert(payload);
-      if (error) throw error;
-    }
-    try { localStorage.setItem('signal_author', author); } catch (e) {}
-    location.href = './04_dashboard.html#proposals';
-  } catch (err) {
-    showToast('저장 실패: ' + (err.message || err), false);
-    btn.disabled = false; btn.textContent = '제안 저장';
-  }
-});
+}
+document.getElementById('promptReset').addEventListener('click', resetPrompt);
 
-/* 삭제 (편집 모드) */
-document.getElementById('deleteBtn').addEventListener('click', async () => {
-  if (!editId || !confirm('이 제안을 삭제할까요?')) return;
-  await sb.from('proposals').delete().eq('id', editId);
-  location.href = './04_dashboard.html#proposals';
-});
-
-/* 편집 모드 로딩 */
-async function loadForEdit(id) {
-  const { data } = await sb.from('proposals').select('*').eq('id', id).single();
-  if (!data) return;
-  editId = id;
-  curBrand = data.brand; curCat = data.category;
-  document.getElementById('pageH1').textContent = '제안 편집';
-  document.getElementById('title').value = data.title || '';
-  document.getElementById('direction').value = data.direction || '';
-  document.getElementById('author').value = data.author || '';
-  selectedSigs = new Set(data.signal_ids || []);
-  selectedKws = new Set(data.keywords || []);
-  document.getElementById('deleteBtn').style.display = '';
+/* 브랜드 선택 */
+function renderBrands() {
+  document.getElementById('brandSeg').innerHTML = Object.entries(BRANDS)
+    .map(([k, v]) => `<button data-b="${k}" class="${k === curBrand ? 'on' : ''}">${v}</button>`).join('');
+  document.getElementById('brandSeg').onclick = e => {
+    if (!e.target.dataset.b) return;
+    curBrand = e.target.dataset.b; renderBrands();
+    resetPrompt();   // 브랜드 바꾸면 프롬프트도 갱신
+    document.getElementById('genHint').textContent = `${BRANDS[curBrand]} 무드로 생성합니다 · 20~40초`;
+  };
 }
 
-/* 매칭된 시장 신상 불러오기 (matches 테이블 + 구글시트) */
+/* ① 트렌드 정보 */
+async function loadTrend(trendId, trendName) {
+  curTrend = trendName || '';
+  if (!trendId) {
+    if (trendName) document.getElementById('trendCard').innerHTML = `<div class="tc-kw">${esc(trendName)}</div>`;
+    return;
+  }
+  const { data } = await sb.from('signals').select('ai_summary,note,url,keywords,category').eq('id', trendId).single();
+  if (!data) return;
+  curSummary = data.ai_summary || data.note || '';
+  curCat = data.category || curCat;
+  const kw = trendName || (data.keywords || [])[0] || '';
+  curTrend = kw;
+  document.getElementById('trendCard').innerHTML = `
+    <div class="tc-kw">${esc(kw)}</div>
+    ${curSummary ? `<div class="tc-sum">${esc(curSummary)}</div>` : ''}
+    ${data.url ? `<a class="tc-link" href="${esc(data.url)}" target="_blank" rel="noopener">🔗 근거 기사</a>` : ''}`;
+  document.getElementById('pageTitle').textContent = kw + ' — 컨셉 제안';
+  resetPrompt();
+}
+
+/* ② 매칭된 시중 제품 */
 const P_SHEETS = [
   { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvYXQtzOfR1p8oy0QsJboB7ISEPJ5XDWvk9XSlCo26K3RPGkbTCrgWPDyPBVtJEbWH7trD_ygb78W/pub?output=csv", segment:"스포츠·아웃도어" },
   { url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTM4CmHdD1mVYoIJpCFwN3BL-CieosFTPUpeuI-mVmBtZyrp21Eo4aZT0W1sd8YPFvv8AIKVoqwjxkl/pub?output=csv", segment:"국내 브랜드" },
@@ -278,21 +285,23 @@ function pPick(row, names) {
   }
   return '';
 }
-async function loadMatchedProducts(trendId) {
+let matchedProducts = [];
+async function loadMatched(trendId) {
   if (!trendId) return;
   const { data: ms } = await sb.from('matches').select('item_id').eq('trend_id', trendId);
   if (!ms || !ms.length) return;
   const ids = new Set(ms.map(m => m.item_id));
 
-  // 팀 등록 신상(시그널 id) 먼저
-  const found = [];
-  const { data: teamItems } = await sb.from('signals')
-    .select('id,ai_summary,note,image_url,author').in('id', [...ids].filter(x => x.length > 20));
-  for (const s of (teamItems || [])) {
-    found.push({ name: s.ai_summary || s.note || '팀 등록 신상', brand: s.author || '팀', image: s.image_url, segment: '팀 등록' });
+  // 팀 등록 신상
+  const uuidIds = [...ids].filter(x => String(x).length > 20);
+  if (uuidIds.length) {
+    const { data: teamItems } = await sb.from('signals')
+      .select('id,ai_summary,note,image_url,author').in('id', uuidIds);
+    for (const s of (teamItems || [])) {
+      matchedProducts.push({ name: s.ai_summary || s.note || '팀 등록 신상', brand: s.author || '팀 등록', image: s.image_url, segment: '팀 등록' });
+    }
   }
-
-  // 구글시트 신상 (p0, p100000 ... 인덱스 방식)
+  // 구글시트 신상
   await Promise.all(P_SHEETS.map((sheet, si) => new Promise(resolve => {
     Papa.parse(sheet.url, {
       download: true, header: true, skipEmptyLines: true,
@@ -300,7 +309,7 @@ async function loadMatchedProducts(trendId) {
         (res.data || []).forEach((r, i) => {
           const pid = 'p' + (si * 100000 + i);
           if (!ids.has(pid)) return;
-          found.push({
+          matchedProducts.push({
             name: pPick(r, ['product_name','productname','상품명','name']),
             brand: pPick(r, ['brand','브랜드']),
             image: pPick(r, ['image_url','imageurl','이미지','picture','image']),
@@ -313,80 +322,121 @@ async function loadMatchedProducts(trendId) {
       error: () => resolve(),
     });
   })));
-
-  if (!found.length) return;
-  document.getElementById('matchedBox').style.display = '';
-  document.getElementById('matchedGrid').innerHTML = found.map(p => `
-    <div class="mg-item">
-      <div class="mg-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '◇'}</div>
-      <div class="mg-body">
-        <div class="mg-name">${esc(p.name || '상품')}</div>
-        <div class="mg-meta">${esc(p.brand || '')}${p.segment ? ' · ' + esc(p.segment) : ''}</div>
+  renderMatched();
+}
+function renderMatched() {
+  if (!matchedProducts.length) return;
+  document.getElementById('mkEmpty').style.display = 'none';
+  document.getElementById('mkCount').textContent = `${matchedProducts.length}건`;
+  document.getElementById('mkGrid').innerHTML = matchedProducts.map(p => `
+    <div class="mk-item">
+      <div class="mk-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '◇'}</div>
+      <div class="mk-body">
+        <div class="mk-name">${esc(p.name || '상품')}</div>
+        <div class="mk-meta">${esc(p.brand || '')}${p.segment ? ' · ' + esc(p.segment) : ''}</div>
       </div>
     </div>`).join('');
 }
 
-/* AI 컨셉 이미지 생성 */
-document.getElementById('genImgBtn').addEventListener('click', async () => {
-  const trend = curTrend || document.getElementById('title').value.trim();
-  if (!trend) { showToast('먼저 매칭에서 넘어오거나 제목에 트렌드를 입력해주세요.', false); return; }
-
-  const btn = document.getElementById('genImgBtn');
-  const hint = document.getElementById('genImgHint');
-  btn.disabled = true; btn.textContent = '생성 중… (20~40초)';
-  hint.textContent = `${BRANDS[curBrand]} 무드로 "${trend}" 그리는 중…`;
-
+/* ③ AI 컨셉 이미지 생성 */
+document.getElementById('genBtn').addEventListener('click', async () => {
+  if (!curTrend) { showToast('트렌드 정보가 없어요. 매칭 화면에서 들어와주세요.', false); return; }
+  const btn = document.getElementById('genBtn');
+  const hint = document.getElementById('genHint');
+  btn.disabled = true; btn.textContent = '생성 중…';
+  hint.textContent = `${BRANDS[curBrand]} 무드로 "${curTrend}" 그리는 중…`;
   try {
+    const userPrompt = document.getElementById('prompt').value.trim();
     const { data, error } = await sb.functions.invoke('generate-image', {
-      body: { trend, brand: curBrand, category: curCat, summary: document.getElementById('direction').value.trim() },
+      body: { trend: curTrend, brand: curBrand, category: curCat, summary: curSummary, prompt: userPrompt },
     });
     if (error) throw error;
     if (!data?.ok) throw new Error(data?.error || '생성 실패');
-
+    genImgB64 = data.b64 || null;
     const src = data.b64 ? `data:image/png;base64,${data.b64}` : data.url;
-    document.getElementById('aiImg').src = src;
-    document.getElementById('aiImgBox').style.display = '';
-    hint.textContent = `${BRANDS[curBrand]} 무드 · ${trend}`;
+    const img = document.getElementById('genImg');
+    img.src = src; img.style.display = '';
+    document.getElementById('genPh').style.display = 'none';
+    const cap = document.getElementById('genCap');
+    cap.textContent = `${BRANDS[curBrand]} × ${curTrend} — AI 컨셉 이미지 (실제 디자인 아님)`;
+    cap.style.display = '';
+    hint.textContent = '다른 브랜드로 다시 생성할 수 있어요';
   } catch (e) {
-    showToast('이미지 생성 실패: ' + esc(e.message || e), false);
-    hint.textContent = '';
+    showToast('이미지 생성 실패: ' + (e.message || e), false);
+    hint.textContent = 'generate-image 함수 배포 후 사용 가능합니다';
   } finally {
-    btn.disabled = false; btn.textContent = '✨ AI 이미지 생성';
+    btn.disabled = false; btn.textContent = '✨ 컨셉 이미지 생성';
   }
 });
 
-(async () => {
-  const { data } = await sb.from('signals')
-    .select('id,created_at,author,note,image_url,keywords,category,brand_fit')
-    .order('created_at', { ascending: false }).limit(300);
-  allSignals = data || [];
-
-  const params = new URLSearchParams(location.search);
-  if (params.get('id')) await loadForEdit(params.get('id'));
-  else {
-    if (params.get('brand')) curBrand = params.get('brand');
-    if (params.get('cat')) {
-      const c = params.get('cat');
-      // 매칭에서 넘어온 시트 카테고리(shoe 등) → 제안 카테고리로 변환
-      const map = { shoe:'shoes', shoes:'shoes', top:'tshirt', outer:'outer', outerwear:'outer', bottom:'pants', pants:'pants', bag:'bag', acc:'acc', dress:'dress', skirt:'skirt' };
-      curCat = map[c] || c;
+/* ④ 저장 */
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  if (!curTrend) { showToast('트렌드 정보가 없어요.', false); return; }
+  const note = document.getElementById('note').value.trim();
+  const payload = {
+    brand: curBrand, category: curCat,
+    title: `${curTrend} — ${BRANDS[curBrand]}`,
+    direction: note || null,
+    keywords: curTrend ? [curTrend] : [],
+    signal_ids: curTrendId ? [curTrendId] : [],
+  };
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  try {
+    if (editId) {
+      const { error } = await sb.from('proposals').update(payload).eq('id', editId);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('proposals').insert(payload);
+      if (error) throw error;
     }
-    // 매칭에서 넘어온 트렌드 → 제목에 미리 채움
-    const trend = params.get('trend');
-    if (trend) {
-      curTrend = trend;
-      document.getElementById('title').value = `${trend} 방향 제안`;
-      document.getElementById('genImgHint').textContent = `트렌드: ${trend}`;
-    }
-    if (params.get('trendId')) loadMatchedProducts(params.get('trendId'));
-    try { const a = localStorage.getItem('signal_author'); if (a) document.getElementById('author').value = a; } catch (e) {}
+    location.href = './index.html#proposals';
+  } catch (err) {
+    showToast('저장 실패: ' + (err.message || err), false);
+    btn.disabled = false; btn.textContent = '컨셉 저장';
   }
+});
 
-  renderSegs();
-  renderPicker();
-  const pool = new Set();
-  for (const s of allSignals) if (selectedSigs.has(s.id)) for (const k of (s.keywords || [])) pool.add(k);
-  renderKwTags(pool);
+/* 삭제 */
+document.getElementById('deleteBtn').addEventListener('click', async () => {
+  if (!editId || !confirm('이 컨셉을 삭제할까요?')) return;
+  await sb.from('proposals').delete().eq('id', editId);
+  location.href = './index.html#proposals';
+});
+
+/* 기존 컨셉 불러오기 */
+async function loadForEdit(id) {
+  const { data } = await sb.from('proposals').select('*').eq('id', id).single();
+  if (!data) return;
+  editId = id;
+  curBrand = data.brand || 'mlb'; curCat = data.category || 'shoes';
+  curTrend = (data.keywords || [])[0] || '';
+  curTrendId = (data.signal_ids || [])[0] || '';
+  document.getElementById('note').value = data.direction || '';
+  document.getElementById('deleteBtn').style.display = '';
+  document.getElementById('saveBtn').textContent = '수정 저장';
+  renderBrands();
+  if (curTrendId) { await loadTrend(curTrendId, curTrend); loadMatched(curTrendId); }
+  else if (curTrend) loadTrend(null, curTrend);
+}
+
+(async () => {
+  renderBrands();
+  renderPromptTips();
+  const params = new URLSearchParams(location.search);
+  if (params.get('id')) { await loadForEdit(params.get('id')); return; }
+
+  if (params.get('brand')) curBrand = params.get('brand');
+  const cat = params.get('cat');
+  if (cat) {
+    const map = { shoe:'shoes', shoes:'shoes', top:'tshirt', outer:'outer', outerwear:'outer',
+                  bottom:'pants', pants:'pants', bag:'bag', acc:'acc', dress:'dress', skirt:'skirt' };
+    curCat = map[cat] || cat;
+  }
+  curTrendId = params.get('trendId') || '';
+  renderBrands();
+  await loadTrend(curTrendId, params.get('trend'));
+  if (curTrendId) loadMatched(curTrendId);
 })();
 </script>
 </body>
